@@ -8,14 +8,14 @@
 namespace okami {
     template <typename VertexId, typename VertexData, typename EdgeData, typename VertexIdHash>
     void Digraph<VertexId, VertexData, EdgeData, VertexIdHash>::SwapEdges(graph_idx_t idx1, graph_idx_t idx2) {
-        edge_impl_t& e1 = mEdges[idx1];
-        edge_impl_t& e2 = mEdges[idx2];
+        edge_impl_t& e1 = edges[idx1];
+        edge_impl_t& e2 = edges[idx2];
 
-        vertex_impl_t& e1s = mVertices[e1.mSource];
-        vertex_impl_t& e1d = mVertices[e1.mDest];
+        vertex_impl_t& e1s = vertices[e1.source];
+        vertex_impl_t& e1d = vertices[e1.dest];
 
-        vertex_impl_t& e2s = mVertices[e2.mSource];
-        vertex_impl_t& e2d = mVertices[e2.mDest];
+        vertex_impl_t& e2s = vertices[e2.source];
+        vertex_impl_t& e2d = vertices[e2.dest];
 
         graph_idx_t e1pi = e1.mPrevIn;
         graph_idx_t e1po = e1.mPrevOut;
@@ -56,52 +56,52 @@ namespace okami {
             e2d.mLastIn = idx1;
 
         if (e1pi != invalid_graph_edge)
-            mEdges[e1pi].mNextIn = idx2;
+            edges[e1pi].mNextIn = idx2;
         if (e1ni != invalid_graph_edge)
-            mEdges[e1ni].mPrevIn = idx2;
+            edges[e1ni].mPrevIn = idx2;
         if (e1po != invalid_graph_edge)
-            mEdges[e1po].mNextOut = idx2;
+            edges[e1po].mNextOut = idx2;
         if (e1no != invalid_graph_edge)
-            mEdges[e1no].mPrevOut = idx2;
+            edges[e1no].mPrevOut = idx2;
 
         if (e2pi != invalid_graph_edge)
-            mEdges[e2pi].mNextIn = idx1;
+            edges[e2pi].mNextIn = idx1;
         if (e2ni != invalid_graph_edge)
-            mEdges[e2ni].mPrevIn = idx1;
+            edges[e2ni].mPrevIn = idx1;
         if (e2po != invalid_graph_edge)
-            mEdges[e2po].mNextOut = idx1;
+            edges[e2po].mNextOut = idx1;
         if (e2no != invalid_graph_edge)
-            mEdges[e2no].mPrevOut = idx1;
+            edges[e2no].mPrevOut = idx1;
 
-        mIdToEdge[std::make_pair(e1s.mId, e1d.mId)] = idx2;
-        mIdToEdge[std::make_pair(e2s.mId, e2d.mId)] = idx1;
+        idToEdge[std::make_pair(e1s.id, e1d.id)] = idx2;
+        idToEdge[std::make_pair(e2s.id, e2d.id)] = idx1;
 
         std::swap(e1, e2);
     }
 
     template <typename VertexId, typename VertexData, typename EdgeData, typename VertexIdHash>
     void Digraph<VertexId, VertexData, EdgeData, VertexIdHash>::SwapVertices(graph_idx_t idx1, graph_idx_t idx2) {
-        vertex_impl_t& v1 = mVertices[idx1];
-        vertex_impl_t& v2 = mVertices[idx2];
+        vertex_impl_t& v1 = vertices[idx1];
+        vertex_impl_t& v2 = vertices[idx2];
 
-        for (graph_idx_t it = v1.mFirstIn; it != invalid_graph_edge; it = mEdges[it].mNextIn) {
-            mEdges[it].mDest = idx2;
+        for (graph_idx_t it = v1.mFirstIn; it != invalid_graph_edge; it = edges[it].mNextIn) {
+            edges[it].dest = idx2;
         }
 
-        for (graph_idx_t it = v1.mFirstOut; it != invalid_graph_edge; it = mEdges[it].mNextOut) {
-            mEdges[it].mSource = idx2;
+        for (graph_idx_t it = v1.mFirstOut; it != invalid_graph_edge; it = edges[it].mNextOut) {
+            edges[it].source = idx2;
         }
 
-        for (graph_idx_t it = v2.mFirstIn; it != invalid_graph_edge; it = mEdges[it].mNextIn) {
-            mEdges[it].mDest = idx1;
+        for (graph_idx_t it = v2.mFirstIn; it != invalid_graph_edge; it = edges[it].mNextIn) {
+            edges[it].dest = idx1;
         }
 
-        for (graph_idx_t it = v2.mFirstOut; it != invalid_graph_edge; it = mEdges[it].mNextOut) {
-            mEdges[it].mSource = idx1;
+        for (graph_idx_t it = v2.mFirstOut; it != invalid_graph_edge; it = edges[it].mNextOut) {
+            edges[it].source = idx1;
         }
 
-        mIdToVertex[v1.mId] = idx2;
-        mIdToVertex[v2.mId] = idx1;
+        idToVertex[v1.id] = idx2;
+        idToVertex[v2.id] = idx1;
 
         std::swap(v1, v2);
     }
@@ -112,7 +112,7 @@ namespace okami {
             v.mFirstIn = eidx;
             v.mLastIn = eidx;
         } else {
-            edge_impl_t& le = mEdges[v.mLastIn];
+            edge_impl_t& le = edges[v.mLastIn];
             le.mNextIn = eidx;
             e.mPrevIn = v.mLastIn;
             v.mLastIn = eidx;
@@ -125,7 +125,7 @@ namespace okami {
             v.mFirstOut = eidx;
             v.mLastOut = eidx;
         } else {
-            edge_impl_t& le = mEdges[v.mLastOut];
+            edge_impl_t& le = edges[v.mLastOut];
             le.mNextOut = eidx;
             e.mPrevOut = v.mLastOut;
             v.mLastOut = eidx;
@@ -135,14 +135,14 @@ namespace okami {
     template <typename VertexId, typename VertexData, typename EdgeData, typename VertexIdHash>
     void Digraph<VertexId, VertexData, EdgeData, VertexIdHash>::RemoveFromInLinkedList(edge_impl_t& e) {
         if (e.mPrevIn != invalid_graph_edge) {
-            mEdges[e.mPrevIn].mNextIn = e.mNextIn;
+            edges[e.mPrevIn].mNextIn = e.mNextIn;
         } else {
-            mVertices[e.mDest].mFirstIn = e.mNextIn;
+            vertices[e.dest].mFirstIn = e.mNextIn;
         }
         if (e.mNextIn != invalid_graph_edge) {
-            mEdges[e.mNextIn].mPrevIn = e.mPrevIn;
+            edges[e.mNextIn].mPrevIn = e.mPrevIn;
         } else {
-            mVertices[e.mDest].mLastIn = e.mPrevIn;
+            vertices[e.dest].mLastIn = e.mPrevIn;
         }
 
         e.mNextIn = invalid_graph_edge;
@@ -152,14 +152,14 @@ namespace okami {
     template <typename VertexId, typename VertexData, typename EdgeData, typename VertexIdHash>
     void Digraph<VertexId, VertexData, EdgeData, VertexIdHash>::RemoveFromOutLinkedList(edge_impl_t& e) {
         if (e.mPrevOut != invalid_graph_edge) {
-            mEdges[e.mPrevOut].mNextOut = e.mNextOut;
+            edges[e.mPrevOut].mNextOut = e.mNextOut;
         } else {
-            mVertices[e.mSource].mFirstOut = e.mNextOut;
+            vertices[e.source].mFirstOut = e.mNextOut;
         }
         if (e.mNextOut != invalid_graph_edge) {
-            mEdges[e.mNextOut].mPrevOut = e.mPrevOut;
+            edges[e.mNextOut].mPrevOut = e.mPrevOut;
         } else {
-            mVertices[e.mSource].mLastOut = e.mPrevOut;
+            vertices[e.source].mLastOut = e.mPrevOut;
         }
 
         e.mNextOut = invalid_graph_edge;
@@ -168,27 +168,27 @@ namespace okami {
 
     template <typename VertexId, typename VertexData, typename EdgeData, typename VertexIdHash>
     std::tuple<graph_idx_t, graph_idx_t> Digraph<VertexId, VertexData, EdgeData, VertexIdHash>::RemoveEdgeAtIdx(graph_idx_t idx) {
-        if (idx != mEdges.size() - 1) {
-            SwapEdges(idx, mEdges.size() - 1);
+        if (idx != edges.size() - 1) {
+            SwapEdges(idx, edges.size() - 1);
         }
 
-        auto& e = mEdges.back();
-        auto& s = mVertices[e.mSource];
-        auto& d = mVertices[e.mDest];
-        mIdToEdge.erase(std::make_pair(s.mId, d.mId));
+        auto& e = edges.back();
+        auto& s = vertices[e.source];
+        auto& d = vertices[e.dest];
+        idToEdge.erase(std::make_pair(s.id, d.id));
         
         auto nextIn = e.mNextIn;
         auto nextOut = e.mNextOut;
         RemoveFromOutLinkedList(e);
         RemoveFromInLinkedList(e);
-        mEdges.pop_back();
+        edges.pop_back();
 
         return std::make_tuple(nextIn, nextOut);
     }
 
     template <typename VertexId, typename VertexData, typename EdgeData, typename VertexIdHash>
     void Digraph<VertexId, VertexData, EdgeData, VertexIdHash>::RemoveVertexAtIdx(graph_idx_t idx) {
-        const vertex_impl_t& v = mVertices[idx];
+        const vertex_impl_t& v = vertices[idx];
 
         for (graph_idx_t it = v.mFirstIn; it != invalid_graph_edge;) {
             it = std::get<0>(RemoveEdgeAtIdx(it));
@@ -198,20 +198,20 @@ namespace okami {
             it = std::get<1>(RemoveEdgeAtIdx(it));
         }
 
-        if (idx != mVertices.size() - 1) {
-            SwapVertices(idx, mVertices.size() - 1);
+        if (idx != vertices.size() - 1) {
+            SwapVertices(idx, vertices.size() - 1);
         }
 
-        mIdToVertex.erase(mVertices.back().mId);
-        mVertices.pop_back();
+        idToVertex.erase(vertices.back().id);
+        vertices.pop_back();
     }
 
     template <typename VertexId, typename VertexData, typename EdgeData, typename VertexIdHash>
     void Digraph<VertexId, VertexData, EdgeData, VertexIdHash>::Clear() {
-        mVertices.clear();
-        mEdges.clear();
-        mIdToVertex.clear();
-        mIdToEdge.clear();
+        vertices.clear();
+        edges.clear();
+        idToVertex.clear();
+        idToEdge.clear();
     }
 
     template <typename VertexId, typename VertexData, typename EdgeData, typename VertexIdHash>
@@ -219,8 +219,8 @@ namespace okami {
         Digraph<VertexId, VertexData, EdgeData, VertexIdHash>::GetOutgoing(vertex_const_t vertex) const {
 
         return Collection<OutEdgeIterator<true>>{
-            OutEdgeIterator<true>{vertex.mVertex->mFirstOut, *vertex.mVertex, *this},
-            OutEdgeIterator<true>{invalid_graph_edge, *vertex.mVertex, *this}};
+            OutEdgeIterator<true>{vertex.vertex->mFirstOut, *vertex.vertex, *this},
+            OutEdgeIterator<true>{invalid_graph_edge, *vertex.vertex, *this}};
     }
 
     template <typename VertexId, typename VertexData, typename EdgeData, typename VertexIdHash>
@@ -228,8 +228,8 @@ namespace okami {
         Digraph<VertexId, VertexData, EdgeData, VertexIdHash>::GetIngoing(vertex_const_t vertex) const {
         
         return Collection<InEdgeIterator<true>>{
-            InEdgeIterator<true>{vertex.mVertex->mFirstIn, *vertex.mVertex, *this},
-            InEdgeIterator<true>{invalid_graph_edge, *vertex.mVertex, *this}};
+            InEdgeIterator<true>{vertex.vertex->mFirstIn, *vertex.vertex, *this},
+            InEdgeIterator<true>{invalid_graph_edge, *vertex.vertex, *this}};
     }
 
     template <typename VertexId, typename VertexData, typename EdgeData, typename VertexIdHash>
@@ -237,8 +237,8 @@ namespace okami {
         Digraph<VertexId, VertexData, EdgeData, VertexIdHash>::GetOutgoing(vertex_t vertex) {
 
         return Collection<OutEdgeIterator<false>>{
-            OutEdgeIterator<false>{vertex.mVertex->mFirstOut, *vertex.mVertex, *this},
-            OutEdgeIterator<false>{invalid_graph_edge, *vertex.mVertex, *this}};
+            OutEdgeIterator<false>{vertex.vertex->mFirstOut, *vertex.vertex, *this},
+            OutEdgeIterator<false>{invalid_graph_edge, *vertex.vertex, *this}};
     }
 
     template <typename VertexId, typename VertexData, typename EdgeData, typename VertexIdHash>
@@ -246,8 +246,8 @@ namespace okami {
         Digraph<VertexId, VertexData, EdgeData, VertexIdHash>::GetIngoing(vertex_t vertex) {
 
         return Collection<InEdgeIterator<false>>{
-            InEdgeIterator<false>{vertex.mVertex->mFirstIn, *vertex.mVertex, *this},
-            InEdgeIterator<false>{invalid_graph_edge, *vertex.mVertex, *this}};
+            InEdgeIterator<false>{vertex.vertex->mFirstIn, *vertex.vertex, *this},
+            InEdgeIterator<false>{invalid_graph_edge, *vertex.vertex, *this}};
     }
 
     template <typename VertexId, typename VertexData, typename EdgeData, typename VertexIdHash>
@@ -277,10 +277,10 @@ namespace okami {
     template <typename VertexId, typename VertexData, typename EdgeData, typename VertexIdHash>
     std::optional<typename Digraph<VertexId, VertexData, EdgeData, VertexIdHash>::vertex_t> 
         Digraph<VertexId, VertexData, EdgeData, VertexIdHash>::TryGetVertex(VertexId id) {
-        auto it = mIdToVertex.find(id);
-        if (it != mIdToVertex.end()) {
+        auto it = idToVertex.find(id);
+        if (it != idToVertex.end()) {
             return vertex_t{
-                mVertices[it->second]
+                vertices[it->second]
             };
         }
         else {
@@ -291,10 +291,10 @@ namespace okami {
     template <typename VertexId, typename VertexData, typename EdgeData, typename VertexIdHash>
     std::optional<typename Digraph<VertexId, VertexData, EdgeData, VertexIdHash>::vertex_const_t>
         Digraph<VertexId, VertexData, EdgeData, VertexIdHash>::TryGetVertex(VertexId id) const {
-        auto it = mIdToVertex.find(id);
-        if (it != mIdToVertex.end()) {
+        auto it = idToVertex.find(id);
+        if (it != idToVertex.end()) {
             return vertex_const_t{
-                mVertices[it->second]
+                vertices[it->second]
             };
         }
         else {
@@ -305,12 +305,12 @@ namespace okami {
     template <typename VertexId, typename VertexData, typename EdgeData, typename VertexIdHash>
     std::optional<typename Digraph<VertexId, VertexData, EdgeData, VertexIdHash>::edge_t> 
         Digraph<VertexId, VertexData, EdgeData, VertexIdHash>::TryGetEdge(VertexId source, VertexId dest) {
-        auto it = mIdToEdge.find(std::make_pair(source, dest));
-        if (it != mIdToEdge.end()) {
+        auto it = idToEdge.find(std::make_pair(source, dest));
+        if (it != idToEdge.end()) {
             return edge_t{
-                mEdges[it->second],
-                mVertices[mEdges[it->second].mSource],
-                mVertices[mEdges[it->second].mDest]
+                edges[it->second],
+                vertices[edges[it->second].source],
+                vertices[edges[it->second].dest]
             };
         } else {
             return std::optional<edge_t>{};
@@ -320,12 +320,12 @@ namespace okami {
     template <typename VertexId, typename VertexData, typename EdgeData, typename VertexIdHash>
     std::optional<typename Digraph<VertexId, VertexData, EdgeData, VertexIdHash>::edge_const_t> 
         Digraph<VertexId, VertexData, EdgeData, VertexIdHash>::TryGetEdge(VertexId source, VertexId dest) const {
-        auto it = mIdToEdge.find(std::make_pair(source, dest));
-        if (it != mIdToEdge.end()) {
+        auto it = idToEdge.find(std::make_pair(source, dest));
+        if (it != idToEdge.end()) {
             return edge_const_t{
-                mEdges[it->second],
-                mVertices[mEdges[it->second].mSource],
-                mVertices[mEdges[it->second].mDest]
+                edges[it->second],
+                vertices[edges[it->second].source],
+                vertices[edges[it->second].dest]
             };
         } else {
             return std::optional<edge_const_t>{};
@@ -359,10 +359,10 @@ namespace okami {
     template <typename VertexId, typename VertexData, typename EdgeData, typename VertexIdHash>
     typename Digraph<VertexId, VertexData, EdgeData, VertexIdHash>::vertex_t 
         Digraph<VertexId, VertexData, EdgeData, VertexIdHash>::CreateVertex(VertexId id, VertexData&& data) {
-        mIdToVertex.emplace(id, mVertices.size());
-        mVertices.emplace_back(vertex_impl_t(id, std::move(data)));
+        idToVertex.emplace(id, vertices.size());
+        vertices.emplace_back(vertex_impl_t(id, std::move(data)));
         return vertex_t{
-            mVertices.back()
+            vertices.back()
         };
     }
 
@@ -402,18 +402,18 @@ namespace okami {
     template <typename VertexId, typename VertexData, typename EdgeData, typename VertexIdHash>
     typename Digraph<VertexId, VertexData, EdgeData, VertexIdHash>::edge_t 
         Digraph<VertexId, VertexData, EdgeData, VertexIdHash>::CreateEdge(vertex_t source, vertex_t dest, EdgeData&& data) {
-        auto idx = mEdges.size();
-        mIdToEdge.emplace(std::make_pair(source.Id(), dest.Id()), idx);
+        auto idx = edges.size();
+        idToEdge.emplace(std::make_pair(source.Id(), dest.Id()), idx);
 
-        graph_idx_t sidx = source.mVertex - &mVertices[0];
-        graph_idx_t didx = dest.mVertex - &mVertices[0];
+        graph_idx_t sidx = source.vertex - &vertices[0];
+        graph_idx_t didx = dest.vertex - &vertices[0];
 
-        mEdges.emplace_back(edge_impl_t(std::move(data), sidx, didx));
+        edges.emplace_back(edge_impl_t(std::move(data), sidx, didx));
 
-        vertex_impl_t& s = *source.mVertex;
-        vertex_impl_t& d = *dest.mVertex;
+        vertex_impl_t& s = *source.vertex;
+        vertex_impl_t& d = *dest.vertex;
 
-        edge_impl_t& e = mEdges[idx];
+        edge_impl_t& e = edges[idx];
 
         AddToInLinkedList(d, e, idx);
         AddToOutLinkedList(s, e, idx);
@@ -445,10 +445,10 @@ namespace okami {
 
         for (auto it = begin; it != end; ++it) {
             for (auto edge : GetIngoing(*it)) {
-                ingoing.emplace(edge.mSource);
+                ingoing.emplace(edge.source);
             }
             for (auto edge : GetOutgoing(*it)) {
-                outgoing.emplace(edge.mDest);
+                outgoing.emplace(edge.dest);
             }
         }
 
@@ -468,12 +468,12 @@ namespace okami {
 
     template <typename VertexId, typename VertexData, typename EdgeData, typename VertexIdHash>
     void Digraph<VertexId, VertexData, EdgeData, VertexIdHash>::RemoveEdge(edge_t edge) {
-        RemoveEdgeAtIdx(edge.mEdge - &mEdges[0]);
+        RemoveEdgeAtIdx(edge.edge - &edges[0]);
     }
 
     template <typename VertexId, typename VertexData, typename EdgeData, typename VertexIdHash>
     void Digraph<VertexId, VertexData, EdgeData, VertexIdHash>::RemoveEdge(edge_const_t edge) {
-        RemoveEdgeAtIdx(edge.mEdge - &mEdges[0]);
+        RemoveEdgeAtIdx(edge.edge - &edges[0]);
     }
 
     template <typename VertexId, typename VertexData, typename EdgeData, typename VertexIdHash>
@@ -488,12 +488,12 @@ namespace okami {
 
     template <typename VertexId, typename VertexData, typename EdgeData, typename VertexIdHash>
     void Digraph<VertexId, VertexData, EdgeData, VertexIdHash>::RemoveVertex(vertex_t vertex) {
-        RemoveVertexAtIdx(vertex.mVertex - &mVertices[0]);
+        RemoveVertexAtIdx(vertex.vertex - &vertices[0]);
     }
 
     template <typename VertexId, typename VertexData, typename EdgeData, typename VertexIdHash>
     void Digraph<VertexId, VertexData, EdgeData, VertexIdHash>::RemoveVertex(vertex_const_t vertex) {
-        RemoveVertexAtIdx(vertex.mVertex - &mVertices[0]);
+        RemoveVertexAtIdx(vertex.vertex - &vertices[0]);
     }
 
     template <typename VertexId, typename VertexData, typename EdgeData, typename VertexIdHash>
@@ -519,7 +519,7 @@ namespace okami {
         Digraph<VertexId, VertexData, EdgeData, VertexIdHash>::GetEdges() const {
         return Collection<EdgeIterator<true>>{
             EdgeIterator<true>{0, *this},
-            EdgeIterator<true>{mEdges.size(), *this}
+            EdgeIterator<true>{edges.size(), *this}
         };
     }
 
@@ -528,7 +528,7 @@ namespace okami {
         Digraph<VertexId, VertexData, EdgeData, VertexIdHash>::GetEdges() {
         return Collection<EdgeIterator<false>>{
             EdgeIterator<false>{0, *this},
-            EdgeIterator<false>{mEdges.size(), *this}
+            EdgeIterator<false>{edges.size(), *this}
         };
     }
 
@@ -540,7 +540,7 @@ namespace okami {
     template <typename VertexId, typename VertexData, typename EdgeData, typename VertexIdHash>
     typename Digraph<VertexId, VertexData, EdgeData, VertexIdHash>::template VertexIterator<false> 
         Digraph<VertexId, VertexData, EdgeData, VertexIdHash>::end() {
-        return VertexIterator<false>{mVertices.size(), *this};
+        return VertexIterator<false>{vertices.size(), *this};
     }
 
     template <typename VertexId, typename VertexData, typename EdgeData, typename VertexIdHash>
@@ -551,17 +551,17 @@ namespace okami {
     template <typename VertexId, typename VertexData, typename EdgeData, typename VertexIdHash>
     typename Digraph<VertexId, VertexData, EdgeData, VertexIdHash>::template VertexIterator<true> 
         Digraph<VertexId, VertexData, EdgeData, VertexIdHash>::end() const {
-        return VertexIterator<true>{mVertices.size(), *this};
+        return VertexIterator<true>{vertices.size(), *this};
     }
 
     template <typename VertexId, typename VertexData, typename EdgeData, typename VertexIdHash>
     size_t Digraph<VertexId, VertexData, EdgeData, VertexIdHash>::GetVertexCount() const {
-        return mVertices.size();
+        return vertices.size();
     }
 
     template <typename VertexId, typename VertexData, typename EdgeData, typename VertexIdHash>
     size_t Digraph<VertexId, VertexData, EdgeData, VertexIdHash>::GetEdgeCount() const {
-        return mEdges.size();
+        return edges.size();
     }
 
     template <typename VertexId, typename VertexData, typename EdgeData, typename VertexIdHash>
@@ -570,12 +570,12 @@ namespace okami {
         
         Digraph<VertexId, NoGraphData, NoGraphData, VertexIdHash> result;
 
-        result.mVertices.reserve(mVertices.size());
-        result.mEdges.reserve(mEdges.size());
+        result.vertices.reserve(vertices.size());
+        result.edges.reserve(edges.size());
 
-        for (auto& v : mVertices) {
+        for (auto& v : vertices) {
             DigraphVertexImpl<VertexId, NoGraphData> newVert{
-                v.mId,
+                v.id,
                 NoGraphData{}
             };
 
@@ -584,14 +584,14 @@ namespace okami {
             newVert.mLastOut = v.mLastOut;
             newVert.mLastIn = v.mLastIn;
             
-            result.mVertices.emplace_back(std::move(newVert));
+            result.vertices.emplace_back(std::move(newVert));
         }
 
-        for (auto& e : mEdges) {
+        for (auto& e : edges) {
             DigraphEdgeImpl<NoGraphData> newEdge{
                 NoGraphData{},
-                e.mSource,
-                e.mDest,
+                e.source,
+                e.dest,
             };
 
             newEdge.mNextIn = e.mNextIn;
@@ -599,25 +599,25 @@ namespace okami {
             newEdge.mNextOut = e.mNextOut;
             newEdge.mPrevOut = e.mPrevOut;
 
-            result.mEdges.emplace_back(std::move(newEdge));
+            result.edges.emplace_back(std::move(newEdge));
         }
 
-        result.mIdToVertex = mIdToVertex;
-        result.mIdToEdge = mIdToEdge;
+        result.idToVertex = idToVertex;
+        result.idToEdge = idToEdge;
 
         return result;
     }
 
     template <typename VertexId, typename VertexData, typename EdgeData, typename VertexIdHash>
     bool Digraph<VertexId, VertexData, EdgeData, VertexIdHash>::Verify() const {
-        for (graph_idx_t i = 0; i < mVertices.size(); ++i) {
-            const auto& v = mVertices[i];
+        for (graph_idx_t i = 0; i < vertices.size(); ++i) {
+            const auto& v = vertices[i];
 
             auto first = v.mFirstIn;
             auto last = invalid_graph_vertex;
 
-            for (graph_idx_t it = v.mFirstIn; it != invalid_graph_edge; it = mEdges[it].mNextIn) {
-                const auto& e = mEdges[it];
+            for (graph_idx_t it = v.mFirstIn; it != invalid_graph_edge; it = edges[it].mNextIn) {
+                const auto& e = edges[it];
 
                 if (e.mPrevIn != last) {
                     return false;
@@ -631,14 +631,14 @@ namespace okami {
             }
         }
 
-        for (graph_idx_t i = 0; i < mVertices.size(); ++i) {
-            const auto& v = mVertices[i];
+        for (graph_idx_t i = 0; i < vertices.size(); ++i) {
+            const auto& v = vertices[i];
 
             auto first = v.mFirstOut;
             auto last = invalid_graph_vertex;
 
-            for (graph_idx_t it = v.mFirstOut; it != invalid_graph_edge; it = mEdges[it].mNextOut) {
-                const auto& e = mEdges[it];
+            for (graph_idx_t it = v.mFirstOut; it != invalid_graph_edge; it = edges[it].mNextOut) {
+                const auto& e = edges[it];
 
                 if (e.mPrevOut != last) {
                     return false;
@@ -652,16 +652,16 @@ namespace okami {
             }
         }
         
-        for (auto [v_id, v_idx] : mIdToVertex) {
-            if (mVertices[v_idx].mId != v_id)
+        for (auto [v_id, v_idx] : idToVertex) {
+            if (vertices[v_idx].id != v_id)
                 return false;
         }
 
-        for (auto [e_v_id, e_idx] : mIdToEdge) {
-            auto& edge = mEdges[e_idx];
-            if (e_v_id.first != mVertices[edge.mSource].mId)
+        for (auto [e_v_id, e_idx] : idToEdge) {
+            auto& edge = edges[e_idx];
+            if (e_v_id.first != vertices[edge.source].id)
                 return false;
-            if (e_v_id.second != mVertices[edge.mDest].mId)
+            if (e_v_id.second != vertices[edge.dest].id)
                 return false;
         }
 

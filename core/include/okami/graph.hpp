@@ -22,23 +22,23 @@ namespace okami {
 
     template <typename VertexId, typename VertexData>
     struct DigraphVertexImpl {
-        VertexData mData;
-        VertexId mId;
+        VertexData data;
+        VertexId id;
 
         graph_idx_t mFirstOut = invalid_graph_edge;
         graph_idx_t mLastOut = invalid_graph_edge;
         graph_idx_t mFirstIn = invalid_graph_edge;
         graph_idx_t mLastIn = invalid_graph_edge;
 
-        DigraphVertexImpl(VertexId id, VertexData&& data) : mId(id), mData(std::move(data)) {}
+        DigraphVertexImpl(VertexId id, VertexData&& data) : id(id), data(std::move(data)) {}
     };
 
     template <typename EdgeData>
     struct DigraphEdgeImpl {
-        EdgeData mData;
+        EdgeData data;
 
-        graph_idx_t mSource = invalid_graph_vertex;
-        graph_idx_t mDest = invalid_graph_vertex;
+        graph_idx_t source = invalid_graph_vertex;
+        graph_idx_t dest = invalid_graph_vertex;
 
         graph_idx_t mNextIn = invalid_graph_edge;
         graph_idx_t mPrevIn = invalid_graph_edge;
@@ -46,9 +46,9 @@ namespace okami {
         graph_idx_t mPrevOut = invalid_graph_edge;
 
         DigraphEdgeImpl(EdgeData&& data, graph_idx_t source, graph_idx_t dest) : 
-            mData(std::move(data)),
-            mSource(source),
-            mDest(dest) {}
+            data(std::move(data)),
+            source(source),
+            dest(dest) {}
     };
 
     template <typename VertexId, typename VertexData, bool isConst>
@@ -65,27 +65,27 @@ namespace okami {
             const VertexData&,
             VertexData&>;
 
-        vertex_impl_ptr_t mVertex;
+        vertex_impl_ptr_t vertex;
 
     public:
-        DigraphVertex(vertex_impl_ref_t vertex) : mVertex(&vertex) {}
+        DigraphVertex(vertex_impl_ref_t vertex) : vertex(&vertex) {}
         template <bool isOtherConst>
-        DigraphVertex(const DigraphVertex<VertexId, VertexData, isOtherConst>& vertex) : mVertex(vertex.mVertex) {}
+        DigraphVertex(const DigraphVertex<VertexId, VertexData, isOtherConst>& vertex) : vertex(vertex.vertex) {}
         template <bool isOtherConst>
-        DigraphVertex(DigraphVertex<VertexId, VertexData, isOtherConst>&& vertex) : mVertex(vertex.mVertex) {}
+        DigraphVertex(DigraphVertex<VertexId, VertexData, isOtherConst>&& vertex) : vertex(vertex.vertex) {}
         template <bool isOtherConst>
         DigraphVertex& operator=(const DigraphVertex<VertexId, VertexData, isOtherConst>& vertex) {
-            mVertex = vertex.mVertex;
+            vertex = vertex.vertex;
             return *this;
         }
         template <bool isOtherConst>
         DigraphVertex& operator=(DigraphVertex<VertexId, VertexData, isOtherConst>&& vertex) {
-            mVertex = vertex.mVertex;
+            vertex = vertex.vertex;
             return *this;
         }
 
         VertexId Id() const {
-            return mVertex->mId;
+            return vertex->id;
         }
 
         bool operator==(const DigraphVertex& other) {
@@ -97,7 +97,7 @@ namespace okami {
         }
 
         vertex_data_ref_t Data() const {
-            return mVertex->mData;
+            return vertex->data;
         }
 
         bool operator==(const DigraphVertex<VertexId, VertexData, isConst>& other) const {
@@ -128,34 +128,34 @@ namespace okami {
             const EdgeData&,
             EdgeData&>;
 
-        edge_impl_ptr_t mEdge;
-        vertex_impl_ptr_t mSource;
-        vertex_impl_ptr_t mDest;
+        edge_impl_ptr_t edge;
+        vertex_impl_ptr_t source;
+        vertex_impl_ptr_t dest;
 
     public:
         DigraphEdge(
             edge_impl_ref_t edge, 
             vertex_impl_ref_t source,
             vertex_impl_ref_t dest) : 
-                mEdge(&edge),
-                mSource(&source),
-                mDest(&dest) {}
+                edge(&edge),
+                source(&source),
+                dest(&dest) {}
         template <bool isOtherConst>
         DigraphEdge(const DigraphEdge<VertexId, VertexData, EdgeData, isOtherConst>& edge) :
-            mEdge(edge.mEdge),
-            mSource(edge.mSource),
-            mDest(edge.mDest) {}
+            edge(edge.edge),
+            source(edge.source),
+            dest(edge.dest) {}
 
         DigraphVertex<VertexId, VertexData, isConst> Source() const {
-            return *mSource;
+            return *source;
         }
 
         DigraphVertex<VertexId, VertexData, isConst> Dest() const {
-            return *mDest;
+            return *dest;
         }
 
         bool operator==(const DigraphEdge& other) const {
-            return mSource->mId == other.mSource->mId && mDest->mId == other.mDest->mId;
+            return source->id == other.source->id && dest->id == other.dest->id;
         }
 
         bool operator!=(const DigraphEdge& other) const {
@@ -163,7 +163,7 @@ namespace okami {
         }
 
         edge_data_ref_t Data() const {
-            return mEdge->mData;
+            return edge->data;
         }
 
         template <typename Vid, typename Vdata, typename Edata, typename Vhash>
@@ -207,12 +207,12 @@ namespace okami {
                 }
             }; 
 
-        std::vector<vertex_impl_t> mVertices;
-        std::vector<edge_impl_t> mEdges;
+        std::vector<vertex_impl_t> vertices;
+        std::vector<edge_impl_t> edges;
 
-        std::unordered_map<VertexId, graph_idx_t, VertexIdHash> mIdToVertex;
+        std::unordered_map<VertexId, graph_idx_t, VertexIdHash> idToVertex;
         std::unordered_map<std::pair<VertexId, VertexId>, 
-            graph_idx_t, PairHash<VertexId, VertexId, VertexIdHash, VertexIdHash>> mIdToEdge;
+            graph_idx_t, PairHash<VertexId, VertexId, VertexIdHash, VertexIdHash>> idToEdge;
 
         void SwapEdges(graph_idx_t idx1, graph_idx_t idx2);
         void SwapVertices(graph_idx_t idx1, graph_idx_t idx2);
@@ -229,23 +229,23 @@ namespace okami {
     public:
         template <bool isConst>
         struct VertexIterator {
-            graph_idx_t mIdx;
-            graph_ref_t<isConst> mGraph;
+            graph_idx_t idx;
+            graph_ref_t<isConst> graph;
 
             bool operator==(const VertexIterator<isConst>& other) const {
-                return mIdx == other.mIdx;
+                return idx == other.idx;
             }
             bool operator!=(const VertexIterator<isConst>& other) const {
                 return !operator==(other);
             }
 
             void operator++() {
-                mIdx++;
+                idx++;
             }
 
             vertex_cond_t<isConst> get() const {
                 return vertex_cond_t<isConst>{
-                    mGraph.mVertices[mIdx]
+                    graph.vertices[idx]
                 };
             }
             vertex_cond_t<isConst> operator*() const {
@@ -255,25 +255,25 @@ namespace okami {
 
         template <bool isConst>
         struct EdgeIterator {
-            graph_idx_t mIdx;
-            graph_ref_t<isConst> mGraph;
+            graph_idx_t idx;
+            graph_ref_t<isConst> graph;
 
             bool operator==(const EdgeIterator& other) const {
-                return mIdx == other.mIdx;
+                return idx == other.idx;
             }
             bool operator!=(const EdgeIterator& other) const {
                 return !operator==(other);
             }
 
             void operator++() {
-                ++mIdx;
+                ++idx;
             }
 
             edge_cond_t<isConst> get() const {
                 return edge_cond_t<isConst>{
-                    mGraph.mEdges[mIdx],
-                    mGraph.mVertices[mGraph.mEdges[mIdx].mSource],
-                    mGraph.mVertices[mGraph.mEdges[mIdx].mDest],
+                    graph.edges[idx],
+                    graph.vertices[graph.edges[idx].source],
+                    graph.vertices[graph.edges[idx].dest],
                 };
             }
             edge_cond_t<isConst> operator*() const {
@@ -283,26 +283,26 @@ namespace okami {
 
         template <bool isConst>
         struct InEdgeIterator {
-            graph_idx_t mIdx;
-            vertex_ref_t<isConst> mDest;
-            graph_ref_t<isConst> mGraph;
+            graph_idx_t idx;
+            vertex_ref_t<isConst> dest;
+            graph_ref_t<isConst> graph;
 
             bool operator==(const InEdgeIterator& other) const {
-                return mIdx == other.mIdx;
+                return idx == other.idx;
             }
             bool operator!=(const InEdgeIterator& other) const {
                 return !operator==(other);
             }
 
             void operator++() {
-                mIdx = mGraph.mEdges[mIdx].mNextIn;
+                idx = graph.edges[idx].mNextIn;
             }
 
             edge_cond_t<isConst> get() const {
                 return edge_cond_t<isConst>{
-                    mGraph.mEdges[mIdx],
-                    mGraph.mVertices[mGraph.mEdges[mIdx].mSource],
-                    mDest,
+                    graph.edges[idx],
+                    graph.vertices[graph.edges[idx].source],
+                    dest,
                 };
             }
             edge_cond_t<isConst> operator*() const {
@@ -312,26 +312,26 @@ namespace okami {
 
         template <bool isConst>
         struct OutEdgeIterator {
-            graph_idx_t mIdx;
-            vertex_ref_t<isConst> mSource;
-            graph_ref_t<isConst> mGraph;
+            graph_idx_t idx;
+            vertex_ref_t<isConst> source;
+            graph_ref_t<isConst> graph;
 
             bool operator==(const OutEdgeIterator& other) const {
-                return mIdx == other.mIdx;
+                return idx == other.idx;
             }
             bool operator!=(const OutEdgeIterator& other) const {
                 return !operator==(other);
             }
 
             void operator++() {
-                mIdx = mGraph.mEdges[mIdx].mNextOut;
+                idx = graph.edges[idx].mNextOut;
             }
 
             edge_cond_t<isConst> get() const {
                 return edge_cond_t<isConst>{
-                    mGraph.mEdges[mIdx],
-                    mSource,
-                    mGraph.mVertices[mGraph.mEdges[mIdx].mDest],
+                    graph.edges[idx],
+                    source,
+                    graph.vertices[graph.edges[idx].dest],
                 };
             }
 
@@ -411,29 +411,29 @@ namespace okami {
         bool Verify() const;
 
         size_t GetStorageIndexOf(vertex_t vertex) const {
-            return vertex.mVertex - &mVertices[0];
+            return vertex.vertex - &vertices[0];
         }
         size_t GetStorageIndexOf(vertex_const_t vertex) const {
-            return vertex.mVertex - &mVertices[0];
+            return vertex.vertex - &vertices[0];
         }
         size_t GetStorageIndexOf(edge_t edge) const {
-            return edge.mEdge - &mEdges[0];
+            return edge.edge - &edges[0];
         }
         size_t GetStorageIndexOf(edge_const_t edge) const {
-            return edge.mEdge - &mEdges[0];
+            return edge.edge - &edges[0];
         }
 
         vertex_t GetVertexAtStorageIndex(size_t idx) {
-            return vertex_t(mVertices[idx]);
+            return vertex_t(vertices[idx]);
         }
         vertex_const_t GetVertexAtStorageIndex(size_t idx) const {
-            return vertex_const_t(mVertices[idx]);
+            return vertex_const_t(vertices[idx]);
         }
         edge_t GetEdgeAtStorageIndex(size_t idx) {
-            return edge_t(mEdges[idx], mVertices[mEdges[idx].mSource], mVertices[mEdges[idx].mDest]); 
+            return edge_t(edges[idx], vertices[edges[idx].source], vertices[edges[idx].dest]); 
         }
         edge_const_t GetEdgeAtStorageIndex(size_t idx) const {
-            return edge_const_t(mEdges[idx], mVertices[mEdges[idx].mSource], mVertices[mEdges[idx].mDest]); 
+            return edge_const_t(edges[idx], vertices[edges[idx].source], vertices[edges[idx].dest]); 
         }
 
         std::tuple<vertex_t, bool> GetVertexOrCreate(VertexId id, VertexData&& data) {

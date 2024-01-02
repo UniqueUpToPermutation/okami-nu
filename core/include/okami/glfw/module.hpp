@@ -1,12 +1,14 @@
 #pragma once
 
 #include <okami/okami.hpp>
+#include <okami/system.hpp>
 
 struct GLFWwindow;
 
 namespace okami {
-    struct CGlfwWindowInstance {
+    struct GlfwWindowInstance {
         GLFWwindow* window = nullptr;
+        bool hasFiredWindowClosed = false;
     };
 
     struct SWindowClosed {};
@@ -27,7 +29,7 @@ namespace okami {
 
         Error Initialize(entt::registry& registry) const override;
         Error Destroy(entt::registry& registry) const override;
-        void PreExecute(entt::registry& registry) const override;
-        void PostExecute(entt::registry& registry) const override;
+        Error PreExecute(entt::registry& registry) const override;
+        Error PostExecute(entt::registry& registry) const override;
     };
 }

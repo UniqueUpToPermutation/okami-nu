@@ -8,10 +8,12 @@ find_package(glad CONFIG REQUIRED)
 find_package(expected-lite CONFIG REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 find_package(EnTT CONFIG REQUIRED)
+find_package(unofficial-im3d CONFIG REQUIRED)
 
 include(CTest)
 enable_testing()
 
+add_subdirectory(tools)
 add_subdirectory(core)
 add_subdirectory(tests)
 

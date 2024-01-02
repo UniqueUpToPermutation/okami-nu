@@ -21,19 +21,19 @@ namespace okami {
 
     template <typename VertexId, typename VertexData>
     struct TreeVertexImpl {
-        VertexId mId;
-        VertexData mData;
+        VertexId id;
+        VertexData data;
 
-        forest_idx_t mParent = invalid_forest_vertex;
+        forest_idx_t parent = invalid_forest_vertex;
 
-        forest_idx_t mNext = invalid_forest_vertex;
-        forest_idx_t mPrev = invalid_forest_vertex;
+        forest_idx_t next = invalid_forest_vertex;
+        forest_idx_t prev = invalid_forest_vertex;
 
-        forest_idx_t mFirstChild = invalid_forest_vertex;
-        forest_idx_t mLastChild = invalid_forest_vertex;
+        forest_idx_t firstChild = invalid_forest_vertex;
+        forest_idx_t lastChild = invalid_forest_vertex;
 
         TreeVertexImpl(VertexId id, VertexData&& data) :
-            mId(id), mData(std::move(data)) {}
+            id(id), data(std::move(data)) {}
     };
 
     template <typename VertexId, typename VertexData, bool isConst>
@@ -47,15 +47,15 @@ namespace okami {
             const VertexData&,
             VertexData&>;
 
-        tree_vertex_ref_t mVertex;
+        tree_vertex_ref_t vertex;
 
     public:
-        TreeVertex(tree_vertex_ref_t vertex) : mVertex(vertex) {}
+        TreeVertex(tree_vertex_ref_t vertex) : vertex(vertex) {}
         template <bool isOtherConst>
-        TreeVertex(TreeVertex<VertexId, VertexData, isOtherConst> vertex) : mVertex(vertex.mVertex) {}
+        TreeVertex(TreeVertex<VertexId, VertexData, isOtherConst> vertex) : vertex(vertex.vertex) {}
 
         VertexId Id() const {
-            return mVertex.mId;
+            return vertex.id;
         }
 
         bool operator==(const TreeVertex& other) {
@@ -67,7 +67,7 @@ namespace okami {
         }
 
         tree_data_ref_t Data() const {
-            return mVertex.mData;
+            return vertex.data;
         }
 
         template <typename Vid, typename Vdata, typename Vhash>
@@ -85,8 +85,8 @@ namespace okami {
             VertexId, VertexData, true>;
 
     private:
-        std::vector<TreeVertexImpl<VertexId, VertexData>> mVertices;
-        std::unordered_map<VertexId, forest_idx_t, VertexIdHasher> mIdToIndex;
+        std::vector<TreeVertexImpl<VertexId, VertexData>> vertices;
+        std::unordered_map<VertexId, forest_idx_t, VertexIdHasher> idToIndex;
 
         template <bool isConst>
         using user_vertex_cond_t = std::conditional_t<isConst, vertex_const_t, vertex_t>;
@@ -134,14 +134,14 @@ namespace okami {
 
         template <bool isConst>
         struct VertexIteratorBase {
-            forest_idx_t mIdx;
-            forest_ref_t<isConst> mForest;
+            forest_idx_t idx;
+            forest_ref_t<isConst> forest;
 
             VertexIteratorBase(forest_idx_t idx, forest_ref_t<isConst> forest) :
-                mIdx(idx), mForest(forest) {}
+                idx(idx), forest(forest) {}
 
             bool operator==(const VertexIteratorBase<isConst>& other) const {
-                return mIdx == other.mIdx;
+                return idx == other.idx;
             }
             bool operator!=(const VertexIteratorBase<isConst>& other) const {
                 return !operator==(other);
@@ -149,7 +149,7 @@ namespace okami {
 
             user_vertex_cond_t<isConst> get() const {
                 return user_vertex_cond_t<isConst>{
-                    mForest.mVertices[mIdx]
+                    forest.vertices[idx]
                 };
             }
 
@@ -161,23 +161,23 @@ namespace okami {
         template <bool isConst>
         struct ChildIterator : public VertexIteratorBase<isConst> {
             void operator++() {
-                this->mIdx = this->mForest.mVertices[this->mIdx].mNext;
+                this->idx = this->forest.vertices[this->idx].next;
             }
 
             ChildIterator(forest_idx_t idx, forest_ref_t<isConst> forest) :
                 VertexIteratorBase<isConst>(idx, forest) {}
             ChildIterator(const ChildIterator& other) :
-                VertexIteratorBase<isConst>(other.mIdx, other.mForest) {}
+                VertexIteratorBase<isConst>(other.idx, other.forest) {}
             ChildIterator& operator=(const ChildIterator& other) {
-                this->mIdx = other.mIdx;
-                this->mForest = other.mForest;
+                this->idx = other.idx;
+                this->forest = other.forest;
                 return *this;
             }
         };
 
         template <bool isConst> 
         struct DescendantIterator {
-            forest_ref_t<isConst> mForest;
+            forest_ref_t<isConst> forest;
             std::queue<forest_idx_t> mIndicesQueued;
 
             bool operator==(const DescendantIterator<isConst>& other) const {
@@ -189,7 +189,7 @@ namespace okami {
 
             user_vertex_cond_t<isConst> get() const {
                 return user_vertex_cond_t<isConst>{
-                    mForest.mVertices[mIndicesQueued.front()]
+                    forest.vertices[mIndicesQueued.front()]
                 };
             }
 
@@ -201,11 +201,11 @@ namespace okami {
                 auto idx = mIndicesQueued.front();
                 mIndicesQueued.pop();
 
-                const auto& vert = mForest.mVertices[idx];
+                const auto& vert = forest.vertices[idx];
 
-                for (auto idx = vert.mFirstChild; 
+                for (auto idx = vert.firstChild; 
                     idx != invalid_forest_vertex; 
-                    idx = mForest.mVertices[idx].mNext) {
+                    idx = forest.vertices[idx].next) {
                     mIndicesQueued.emplace(idx);
                 }
             }
@@ -214,16 +214,16 @@ namespace okami {
         template <bool isConst> 
         struct AncestorIterator : public VertexIteratorBase<isConst> {
             void operator++() {
-                this->mIdx = this->mForest.mVertices[this->mIdx].mParent;
+                this->idx = this->forest.vertices[this->idx].parent;
             }
 
             AncestorIterator(forest_idx_t idx, forest_ref_t<isConst> forest) :
                 VertexIteratorBase<isConst>(idx, forest) {}
             AncestorIterator(const AncestorIterator& other) :
-                VertexIteratorBase<isConst>(other.mIdx, other.mForest) {}
+                VertexIteratorBase<isConst>(other.idx, other.forest) {}
             AncestorIterator& operator=(const AncestorIterator& other) {
-                this->mIdx = other.mIdx;
-                this->mForest = other.mForest;
+                this->idx = other.idx;
+                this->forest = other.forest;
                 return *this;
             }
         };
@@ -231,17 +231,17 @@ namespace okami {
         template <bool isConst>
         struct VertexIterator : public VertexIteratorBase<isConst> {
             void operator++() {
-                ++this->mIdx;
+                ++this->idx;
             }
 
             VertexIterator(forest_idx_t idx, forest_ref_t<isConst> forest) :
                 VertexIteratorBase<isConst>(idx, forest) {}
             VertexIterator(const VertexIterator& other) : 
-                VertexIteratorBase<isConst>(other.mIdx, other.mForest) {
+                VertexIteratorBase<isConst>(other.idx, other.forest) {
             }
             VertexIterator& operator=(const VertexIterator& other) {
-                this->mIdx = other.mIdx;
-                this->mForest = other.mForest;
+                this->idx = other.idx;
+                this->forest = other.forest;
                 return *this;
             }
         };
@@ -278,65 +278,65 @@ namespace okami {
     template <typename VertexId, typename VertexData=NoTreeData>
     class Tree {
     private:
-        Forest<VertexId, VertexData> mForest;
-        VertexId mRoot;
+        Forest<VertexId, VertexData> forest;
+        VertexId root;
 
     public:
-        Tree(VertexId root) : mRoot(root) {
-            mForest.CreateVertex(root);
+        Tree(VertexId root) : root(root) {
+            forest.CreateVertex(root);
         }
         
         void RemoveVertexAndDescendants(VertexId id) {
-            if (id == mRoot) {
+            if (id == root) {
                 throw std::runtime_error("Cannot remove root!");
             }
-            mForest.RemoveVertexAndDescendants(id);
+            forest.RemoveVertexAndDescendants(id);
         }
 
         void SetParent(VertexId child, VertexId parent) {
-            mForest.SetParent(child, parent);
+            forest.SetParent(child, parent);
         }
 
         void CreateChild(VertexId parent, VertexId child, VertexData&& childData) {
-            mForest.CreateChild(parent, child, std::move(childData));
+            forest.CreateChild(parent, child, std::move(childData));
         }
 
         std::enable_if_t<std::is_default_constructible_v<VertexData>>
             CreateChild(VertexId parent, VertexId child) {
-            mForest.CreateChild(parent, child);
+            forest.CreateChild(parent, child);
         }
 
         auto GetChildren(VertexId id) const {
-            return mForest.GetChildren(id);
+            return forest.GetChildren(id);
         }
         auto GetChildren(VertexId id) {
-            return mForest.GetChildren(id);
+            return forest.GetChildren(id);
         }
         auto GetDescendants(VertexId id) const {
-            return mForest.GetDescendants(id);
+            return forest.GetDescendants(id);
         }
         auto GetDescendants(VertexId id) {
-            return mForest.GetDescendants(id);
+            return forest.GetDescendants(id);
         }
         auto GetAncestors(VertexId id) const {
-            return mForest.GetAncestors(id);
+            return forest.GetAncestors(id);
         }
         auto GetAncestors(VertexId id) {
-            return mForest.GetAncestors(id);
+            return forest.GetAncestors(id);
         }
         std::optional<VertexId> GetParent(VertexId id) {
-            return mForest.GetParent(id);
+            return forest.GetParent(id);
         }
         std::optional<VertexId> GetNextSibling(VertexId id) {
-            return mForest.GetNextSibling(id);
+            return forest.GetNextSibling(id);
         }
         std::optional<VertexId> GetPreviousSibling(VertexId id) {
-            return mForest.GetPreviousSibling(id);
+            return forest.GetPreviousSibling(id);
         }
 
         void Clear() {
-            mForest.Clear();
-            mForest.CreateVertex(mRoot);
+            forest.Clear();
+            forest.CreateVertex(root);
         }
     };
 }

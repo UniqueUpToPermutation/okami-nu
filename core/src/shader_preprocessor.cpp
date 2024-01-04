@@ -65,25 +65,25 @@ Error okami::ShaderPreprocessor::Load(
             sourceStr << "\"" << std::endl; 
 
     // Find all includes
-    size_t include_pos = contents->find("#include");
+    size_t include_pos = contents.find("#include");
     size_t last_include_pos = 0;
     size_t current_line = 0;
     while (include_pos != std::string::npos) {
 
         current_line += std::count(
-            &contents->at(last_include_pos), 
-            &contents->at(include_pos), '\n');
+            &contents.at(last_include_pos), 
+            &contents.at(include_pos), '\n');
 
-        size_t endLineIndex = contents->find('\n', include_pos);
+        size_t endLineIndex = contents.find('\n', include_pos);
         bool bGlobalSearch = false;
 
         auto quotesIt = std::find(
-            &contents->at(include_pos),
-            &contents->at(endLineIndex), '\"');
+            &contents.at(include_pos),
+            &contents.at(endLineIndex), '\"');
 
-        ss << contents->substr(last_include_pos, include_pos - last_include_pos);
+        ss << contents.substr(last_include_pos, include_pos - last_include_pos);
 
-        if (quotesIt == &contents->at(endLineIndex)) {
+        if (quotesIt == &contents.at(endLineIndex)) {
             if (warningOut) {
                 *warningOut << sourceStr << 
                     ": Warning: #include detected without include file!\n";
@@ -93,8 +93,8 @@ Error okami::ShaderPreprocessor::Load(
             size_t endIndx;
             size_t startIndx;
 
-            startIndx = quotesIt - &contents->at(0) + 1;
-            endIndx = contents->find('\"', startIndx);
+            startIndx = quotesIt - &contents.at(0) + 1;
+            endIndx = contents.find('\"', startIndx);
             bGlobalSearch = false;
             
             if (endIndx == std::string::npos) {
@@ -107,7 +107,7 @@ Error okami::ShaderPreprocessor::Load(
 
             last_include_pos = endIndx + 1;
 
-            std::filesystem::path includeSource = contents->substr(startIndx, endIndx - startIndx);
+            std::filesystem::path includeSource = contents.substr(startIndx, endIndx - startIndx);
             std::filesystem::path nextPath = source.parent_path();
 
             if (bGlobalSearch) {
@@ -126,10 +126,10 @@ Error okami::ShaderPreprocessor::Load(
                     << " \"" << sourceStr << "\"\n"; // Reset line numbers
         }
 
-        include_pos = contents->find("#include", include_pos + 1);
+        include_pos = contents.find("#include", include_pos + 1);
     }
 
-    ss << contents->substr(last_include_pos);
+    ss << contents.substr(last_include_pos);
     return {};
 }
 

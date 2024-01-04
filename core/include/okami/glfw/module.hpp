@@ -3,6 +3,8 @@
 #include <okami/okami.hpp>
 #include <okami/system.hpp>
 
+#include <glm/glm.hpp>
+
 struct GLFWwindow;
 
 namespace okami {
@@ -12,6 +14,15 @@ namespace okami {
     };
 
     struct SWindowClosed {};
+
+    struct WindowSize {
+        int x;
+        int y;
+
+        inline glm::vec2 AsVec2() const {
+            return glm::vec2(static_cast<float>(x), static_cast<float>(y));
+        }
+    };
 
     class GlfwModule : public Module {
     private:

@@ -1,6 +1,8 @@
 #include <okami/glfw/module.hpp>
 #include <GLFW/glfw3.h>
 
+#include <plog/Log.h>
+
 using namespace okami;
 
 void okami::GlfwModule::ErrorHandler(int error, const char* desc) {
@@ -21,9 +23,11 @@ okami::GlfwModule::~GlfwModule() {
 void okami::GlfwModule::CreateWindow(entt::registry& reg, entity e) {
     reg.emplace<GlfwWindowInstance>(e, GlfwWindowInstance{nullptr});
     reg.emplace<SignalSource<SWindowClosed>>(e);
+    reg.emplace<WindowSize>(e);
 }
 
 Error okami::GlfwModule::Initialize(entt::registry& registry) const {
+    PLOG_INFO << "Initializing GLFW...";
     glfwSetErrorCallback(ErrorHandler);
     
     glfwInit();
@@ -45,6 +49,7 @@ Error okami::GlfwModule::Initialize(entt::registry& registry) const {
 }
 
 Error okami::GlfwModule::Destroy(entt::registry& registry) const {
+    PLOG_INFO << "Shutting down GLFW...";
     auto windowView = registry.view<GlfwWindowInstance>();
 
     for (auto e : windowView) {
@@ -67,9 +72,16 @@ Error okami::GlfwModule::PreExecute(entt::registry& registry) const {
     for (auto e : view) {
         auto& window = view.template get<GlfwWindowInstance>(e);
 
+        // Fire window closed signal if necessary
         if (glfwWindowShouldClose(window.window) && !window.hasFiredWindowClosed) {
             FireSignal<SWindowClosed>(registry, e);
             window.hasFiredWindowClosed = true;
+        }
+
+        // Set window size component
+        auto windowSize = TryGet<WindowSize>(registry, e);
+        if (windowSize) {
+            glfwGetFramebufferSize(window.window, &windowSize->x, &windowSize->y);
         }
     }
     return {};

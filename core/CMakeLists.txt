@@ -21,13 +21,18 @@ add_custom_command(
 	COMMAND embedfile ${CMAKE_CURRENT_SOURCE_DIR}/shaders/ogl ogl_shader_rc.cpp MakeGLShaderMap
 	DEPENDS ${shader_SRC})
 
-set(SOURCES ${MAIN_SOURCES} ${OGL_SOURCES} ${GLFW_SOURCES})
+set(SOURCES ${MAIN_SOURCES} ${OGL_SOURCES} ${GLFW_SOURCES} ogl_shader_rc.cpp)
 set(HEADERS ${MAIN_HEADERS} ${OGL_HEADERS} ${GLFW_HEADERS})
 
 add_library(okami-core ${SOURCES} ${HEADERS})
 
 target_include_directories(okami-core PUBLIC include)
+target_include_directories(okami-core PRIVATE embed)
 
 target_link_libraries(okami-core PUBLIC EnTT::EnTT)
+target_link_libraries(okami-core PUBLIC glm::glm)
+
+target_link_libraries(okami-core PRIVATE plog::plog)
 target_link_libraries(okami-core PRIVATE glfw glad::glad)
 target_link_libraries(okami-core PRIVATE unofficial::im3d::im3d)
+target_link_libraries(okami-core PRIVATE assimp::assimp)

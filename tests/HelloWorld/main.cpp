@@ -11,8 +11,10 @@ Error EngineMain() {
     entt::registry reg;
     Error err;
 
-    auto glfw = OKAMI_ERR_UNWRAP(en.Get<GlfwModule>(), err);
-    auto renderer = OKAMI_ERR_UNWRAP(en.Get<GLRendererModule>(), err);
+    auto glfw = en.Get<GlfwModule>();
+    auto renderer = en.Get<GLRendererModule>();
+    OKAMI_ERR_RETURN(glfw);
+    OKAMI_ERR_RETURN(renderer);
 
     auto window = reg.create();
     

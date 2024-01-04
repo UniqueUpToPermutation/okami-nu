@@ -4,6 +4,10 @@
 #include <okami/glfw/module.hpp>
 
 namespace okami {
+    struct CameraReference {
+        entity entity = null;
+    };
+
     class GLRendererModule : public Module {
     public:
         GLRendererModule(GlfwModule const& module);

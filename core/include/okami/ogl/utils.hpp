@@ -3,6 +3,7 @@
 #include <okami/okami.hpp>
 #include <okami/embed.hpp>
 #include <okami/shader_preprocessor.hpp>
+#include <okami/vertex_format.hpp>
 #include <glad/glad.h>
 
 namespace okami {
@@ -12,12 +13,7 @@ namespace okami {
 
         GLuintObject() = default;
         inline GLuintObject(GLuint id) : id(id) {}
-
-        GLuintObject(GLuintObject const&) = delete;
-        GLuintObject& operator=(GLuintObject const&) = delete;
-
-        GLuintObject(GLuintObject&&) = default;
-        GLuintObject& operator=(GLuintObject&&) = default;
+        OKAMI_MOVE_ONLY(GLuintObject);
 
         ~GLuintObject() {
             if (id != 0u) {
@@ -47,11 +43,17 @@ namespace okami {
     void DestroyGLBuffer(GLuint id);
     struct GLBuffer final : public GLuintObject<DestroyGLProgram> {
         using GLuintObject::GLuintObject;
+
+        static Expected<GLBuffer> Create(BufferData const& buffer);
     };
 
     void DestroyGLVertexArray(GLuint id);
     struct GLVertexArray final : public GLuintObject<DestroyGLVertexArray> {
         using GLuintObject::GLuintObject;
+
+        static Expected<GLVertexArray> Create(
+            
+            VertexFormat const& format);
     };
 
     Expected<GLShader> LoadEmbeddedGLShader(
@@ -60,6 +62,8 @@ namespace okami {
         ShaderPreprocessorConfig const& config = {});
 
     ErrorDetails GetErrorGL();
+
+    GLenum ToGL(ValueType valueType);
 
     #define OKAMI_ERR_GL(statement) \
         statement; \

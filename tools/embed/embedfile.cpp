@@ -73,12 +73,11 @@ void do_search(
 
 int main(int argc, char* argv[])
 {   
-	if (argc < 5) {
+	if (argc < 4) {
 		throw std::runtime_error("Incorrect number of runtime arguments!");
 	}
 
 	std::string function_name = argv[3];
-    std::string header_name = argv[4];
 
 	string path(argv[1]);
 	ofstream f_out(argv[2]);

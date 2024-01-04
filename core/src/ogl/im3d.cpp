@@ -3,8 +3,8 @@
 
 using namespace okami;
 
-Expected<Im3dRenderer> okami::Im3dRenderer::Create() {
-	Im3dRenderer result;
+Expected<GLIm3dRenderer> okami::GLIm3dRenderer::Create() {
+	GLIm3dRenderer result;
 
 	Error err;
     {	
@@ -22,8 +22,8 @@ Expected<Im3dRenderer> okami::Im3dRenderer::Create() {
 			LoadEmbeddedGLShader("im3d.glsl", GL_FRAGMENT_SHADER, fsConfig), err);
 
 		result.points.shader = OKAMI_EXP_GL(glCreateProgram());
-		OKAMI_EXP_GL(glAttachShader(*result.points.shader, **vs));
-		OKAMI_EXP_GL(glAttachShader(*result.points.shader, **fs));
+		OKAMI_EXP_GL(glAttachShader(*result.points.shader, *vs));
+		OKAMI_EXP_GL(glAttachShader(*result.points.shader, *fs));
 		OKAMI_EXP_GL(glLinkProgram(*result.points.shader));		
 	}
 
@@ -48,9 +48,9 @@ Expected<Im3dRenderer> okami::Im3dRenderer::Create() {
 			LoadEmbeddedGLShader("im3d.glsl", GL_FRAGMENT_SHADER, fsConfig), err);
 
 		result.lines.shader = OKAMI_EXP_GL(glCreateProgram());
-		OKAMI_EXP_GL(glAttachShader(*result.lines.shader, **vs));
-		OKAMI_EXP_GL(glAttachShader(*result.lines.shader, **gs));
-		OKAMI_EXP_GL(glAttachShader(*result.lines.shader, **fs));
+		OKAMI_EXP_GL(glAttachShader(*result.lines.shader, *vs));
+		OKAMI_EXP_GL(glAttachShader(*result.lines.shader, *gs));
+		OKAMI_EXP_GL(glAttachShader(*result.lines.shader, *fs));
 		OKAMI_EXP_GL(glLinkProgram(*result.lines.shader));		
 	}
 
@@ -69,8 +69,8 @@ Expected<Im3dRenderer> okami::Im3dRenderer::Create() {
 			LoadEmbeddedGLShader("im3d.glsl", GL_FRAGMENT_SHADER, fsConfig), err);
 
 		result.triangles.shader = OKAMI_EXP_GL(glCreateProgram());
-		OKAMI_EXP_GL(glAttachShader(*result.triangles.shader, **vs));
-		OKAMI_EXP_GL(glAttachShader(*result.triangles.shader, **fs));
+		OKAMI_EXP_GL(glAttachShader(*result.triangles.shader, *vs));
+		OKAMI_EXP_GL(glAttachShader(*result.triangles.shader, *fs));
 		OKAMI_EXP_GL(glLinkProgram(*result.triangles.shader));		
 	}
 
@@ -100,7 +100,8 @@ Expected<Im3dRenderer> okami::Im3dRenderer::Create() {
 	return result;
 }
 
-Error okami::Im3dRenderer::Draw(Im3d::Context& context,
+Error okami::GLIm3dRenderer::Draw(
+	Im3d::Context& context,
 	int viewportWidth, int viewportHeight) const {
 	
 	// Typical pipeline state: enable alpha blending, disable depth test and backface culling.

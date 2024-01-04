@@ -8,7 +8,7 @@
 #include <im3d.h>
 
 namespace okami {
-    struct Im3dRenderer {
+    struct GLIm3dRenderer {
     private:
         GLVertexArray vertexArray;
         GLBuffer vertexBuffer;
@@ -24,7 +24,7 @@ namespace okami {
         Shader triangles;
 
     public:
-        static Expected<Im3dRenderer> Create();
+        static Expected<GLIm3dRenderer> Create();
 
         Error Draw(Im3d::Context& context, 
             int viewportWidth, int viewportHeight) const;

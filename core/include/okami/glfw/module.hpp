@@ -13,18 +13,7 @@ namespace okami {
         bool hasFiredWindowClosed = false;
     };
 
-    struct SWindowClosed {};
-
-    struct WindowSize {
-        int x;
-        int y;
-
-        inline glm::vec2 AsVec2() const {
-            return glm::vec2(static_cast<float>(x), static_cast<float>(y));
-        }
-    };
-
-    class GlfwModule : public Module {
+    class GlfwModule final : public Module {
     private:
         static GlfwModule* gSingleton;
 
@@ -36,11 +25,12 @@ namespace okami {
         GlfwModule();
         ~GlfwModule();
 
-        void CreateWindow(entt::registry& reg, entity e);
+        void RegisterPrototypes(std::unordered_map<std::string, Prototype>& prototypes) const override;
+        void CreateWindow(Registry& reg, entity e);
 
-        Error Initialize(entt::registry& registry) const override;
-        Error Destroy(entt::registry& registry) const override;
-        Error PreExecute(entt::registry& registry) const override;
-        Error PostExecute(entt::registry& registry) const override;
+        Error Initialize(Registry& registry) const override;
+        Error Destroy(Registry& registry) const override;
+        Error PreExecute(Registry& registry) const override;
+        Error PostExecute(Registry& registry) const override;
     };
 }

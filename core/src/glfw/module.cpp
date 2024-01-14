@@ -1,4 +1,6 @@
 #include <okami/glfw/module.hpp>
+#include <okami/window.hpp>
+
 #include <GLFW/glfw3.h>
 
 #include <plog/Log.h>
@@ -20,13 +22,17 @@ okami::GlfwModule::~GlfwModule() {
     gSingleton = nullptr;
 }
 
-void okami::GlfwModule::CreateWindow(entt::registry& reg, entity e) {
-    reg.emplace<GlfwWindowInstance>(e, GlfwWindowInstance{nullptr});
-    reg.emplace<SignalSource<SWindowClosed>>(e);
-    reg.emplace<WindowSize>(e);
+void okami::GlfwModule::RegisterPrototypes(std::unordered_map<std::string, Prototype>& protoMap) const {
+    // Window prototype
+    protoMap[std::string{prototypes::Window}].factories.emplace_back(
+        [](Registry& reg, entity e) -> Error {
+            reg.emplace<GlfwWindowInstance>(e, GlfwWindowInstance{nullptr});
+            return {};
+        } 
+    );
 }
 
-Error okami::GlfwModule::Initialize(entt::registry& registry) const {
+Error okami::GlfwModule::Initialize(Registry& registry) const {
     PLOG_INFO << "Initializing GLFW...";
     glfwSetErrorCallback(ErrorHandler);
     
@@ -48,7 +54,7 @@ Error okami::GlfwModule::Initialize(entt::registry& registry) const {
     return {};
 }
 
-Error okami::GlfwModule::Destroy(entt::registry& registry) const {
+Error okami::GlfwModule::Destroy(Registry& registry) const {
     PLOG_INFO << "Shutting down GLFW...";
     auto windowView = registry.view<GlfwWindowInstance>();
 
@@ -65,7 +71,7 @@ Error okami::GlfwModule::Destroy(entt::registry& registry) const {
     return {};
 }
 
-Error okami::GlfwModule::PreExecute(entt::registry& registry) const {
+Error okami::GlfwModule::PreExecute(Registry& registry) const {
     glfwPollEvents();
 
     auto view = registry.template view<GlfwWindowInstance>();
@@ -87,7 +93,7 @@ Error okami::GlfwModule::PreExecute(entt::registry& registry) const {
     return {};
 }
 
-Error okami::GlfwModule::PostExecute(entt::registry& registry) const {
+Error okami::GlfwModule::PostExecute(Registry& registry) const {
     return {};
 }
 

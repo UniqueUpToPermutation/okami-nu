@@ -1,11 +1,13 @@
 #include <okami/ogl/module.hpp>
 #include <okami/ogl/renderer.hpp>
 
+#include <okami/window.hpp>
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <im3d.h>
 
-#include <okami/log.hpp>
+#include <plog/Log.h>
 
 using namespace okami;
 
@@ -13,16 +15,18 @@ struct GLRenderSurface {};
 
 okami::GLRendererModule::GLRendererModule(GlfwModule const& module) : Module(ModuleDesc{}) {}
 
-Error okami::GLRendererModule::CreateRenderSurface(entt::registry& registry, entity e) {
-    auto glfwComponent = TryGet<GlfwWindowInstance>(registry, e);
-    OKAMI_ERR_RETURN(glfwComponent);
+void okami::GLRendererModule::RegisterPrototypes(std::unordered_map<std::string, Prototype>& proto) const {
+    // Window prototype
+    proto[std::string{prototypes::Window}].factories.emplace_back([](Registry& reg, entity e) -> Error {
+        auto glfwComponent = TryGet<GlfwWindowInstance>(reg, e);
+        OKAMI_ERR_RETURN(glfwComponent);
 
-    registry.emplace<GLRenderSurface>(e);
-
-    return {};
+        reg.emplace<GLRenderSurface>(e);
+        return {};
+    });
 }
 
-Error okami::GLRendererModule::Initialize(entt::registry& registry) const {
+Error okami::GLRendererModule::Initialize(Registry& registry) const {
     PLOG_INFO << "Initializing GLRenderer...";
 
     auto windowView = registry.view<GlfwWindowInstance, GLRenderSurface>();
@@ -36,16 +40,16 @@ Error okami::GLRendererModule::Initialize(entt::registry& registry) const {
     OKAMI_ERR_RETURN_IF(!version, RuntimeError{"Failed to load OpenGL!"});
 
     auto& renderer = registry.ctx().emplace<GLRenderer>();
-    auto& im3dContext = registry.ctx().emplace<Im3d::Context>();
 
     return {};
 }
 
-Error okami::GLRendererModule::PreExecute(entt::registry& registry) const {
+Error okami::GLRendererModule::PreExecute(Registry& registry) const {
     return {};
 }
 
-Error okami::GLRendererModule::PostExecute(entt::registry& registry) const {
+Error okami::GLRendererModule::PostExecute(Registry& registry) const {
+    Error err;
     auto windowView = registry.view<GlfwWindowInstance, GLRenderSurface>();
 
     for (auto e : windowView) {
@@ -55,7 +59,6 @@ Error okami::GLRendererModule::PostExecute(entt::registry& registry) const {
             glfwMakeContextCurrent(window.window);
 
             auto& renderer = registry.ctx().get<GLRenderer>();
-            auto& im3d = registry.ctx().get<Im3d::Context>();
 
             auto windowSize = GetProperty<WindowSize>(registry, e)
                 .value_or(WindowSize{100, 100});
@@ -71,16 +74,23 @@ Error okami::GLRendererModule::PostExecute(entt::registry& registry) const {
                 .viewTransform = Inverse(transform)
             };
 
-            renderer.Draw(renderCamera, im3d);
+            err += renderer.BeginColorPass();
+            //err += renderer.DrawIm3d(renderCamera, im3d);
 
             glfwSwapBuffers(window.window);
         }
     }
 
-    return {};
+    return err;
 }
 
-Error okami::GLRendererModule::Destroy(entt::registry& registry) const {
+Error okami::GLRendererModule::Destroy(Registry& registry) const {
+    Error err;
+
     PLOG_INFO << "Shutting down GLRenderer...";
-    return {};
+    auto& renderer = registry.ctx().get<GLRenderer>();
+    err += renderer.Destroy();
+
+    registry.ctx().erase<GLRenderer>();
+    return err;
 }

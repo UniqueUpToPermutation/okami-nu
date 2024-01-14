@@ -7,6 +7,9 @@ file(GLOB OGL_HEADERS ${HEADER_DIR}/ogl/*.hpp)
 file(GLOB GLFW_SOURCES ${SOURCES_DIR}/glfw/*.cpp)
 file(GLOB GLFW_HEADERS ${HEADER_DIR}/glfw/*.hpp)
 
+file(GLOB IM3D_SOURCES ${SOURCES_DIR}/im3d/*.cpp)
+file(GLOB IM3D_HEADERS ${HEADER_DIR}/im3d/*.hpp)
+
 file(GLOB MAIN_SOURCES ${SOURCES_DIR}/*.cpp)
 file(GLOB MAIN_HEADERS ${HEADER_DIR}/*.hpp)
 
@@ -21,8 +24,8 @@ add_custom_command(
 	COMMAND embedfile ${CMAKE_CURRENT_SOURCE_DIR}/shaders/ogl ogl_shader_rc.cpp MakeGLShaderMap
 	DEPENDS ${shader_SRC})
 
-set(SOURCES ${MAIN_SOURCES} ${OGL_SOURCES} ${GLFW_SOURCES} ogl_shader_rc.cpp)
-set(HEADERS ${MAIN_HEADERS} ${OGL_HEADERS} ${GLFW_HEADERS})
+set(SOURCES ${MAIN_SOURCES} ${OGL_SOURCES} ${GLFW_SOURCES} ${IM3D_SOURCES} ogl_shader_rc.cpp)
+set(HEADERS ${MAIN_HEADERS} ${OGL_HEADERS} ${GLFW_HEADERS} ${IM3D_HEADERS})
 
 add_library(okami-core ${SOURCES} ${HEADERS})
 

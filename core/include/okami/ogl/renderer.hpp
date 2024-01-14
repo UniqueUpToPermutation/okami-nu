@@ -17,7 +17,8 @@ namespace okami {
         OKAMI_MOVE_ONLY(GLRenderer);
 
         Error Initialize();
-        Error Draw(CameraRenderData const& camera, Im3d::Context& context);
+        Error BeginColorPass();
+        Error DrawIm3d(CameraRenderData const& camera, Im3d::Context& context);
         Error Destroy();
     };
 }

@@ -17,7 +17,6 @@ namespace okami {
             scale(scale) {}
 
         Transform& operator*=(Transform const& other);
-        
     
         glm::vec3 TransformPoint(glm::vec3 p) const;
         glm::vec3 TransformTangent(glm::vec3 t) const;

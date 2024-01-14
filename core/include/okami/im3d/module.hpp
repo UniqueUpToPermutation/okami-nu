@@ -1,18 +1,11 @@
 #pragma once
 
 #include <okami/okami.hpp>
-#include <okami/glfw/module.hpp>
 
 namespace okami {
-    struct CameraReference {
-        entity entity = null;
-    };
-
-    class GLRendererModule : public Module {
+    class Im3dModule : public Module {
     public:
-        GLRendererModule(GlfwModule const& module);
-
-        void RegisterPrototypes(std::unordered_map<std::string, Prototype>& prototypes) const override;
+        Im3dModule();
 
         Error Initialize(Registry& registry) const override;
         Error PreExecute(Registry& registry) const override;

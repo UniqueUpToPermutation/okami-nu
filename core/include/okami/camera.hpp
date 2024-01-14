@@ -7,7 +7,13 @@
 
 #include <okami/transform.hpp>
 
+#include <string_view>
+
 namespace okami {
+    namespace prototypes {
+        constexpr std::string_view Camera = "protoCamera";
+    }
+
     enum class CameraType {
         Perspective,
         Orthographic

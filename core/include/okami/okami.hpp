@@ -12,6 +12,7 @@ namespace okami {
     constexpr int kMinorVersion = 0;
 
     using entity = entt::entity;
+    using Registry = entt::registry;
     constexpr auto null = entt::null;
 
     template <class T>
@@ -178,11 +179,20 @@ namespace okami {
         inline auto end() { return bytes.end(); }
     };
 
+    struct Prototype {
+        using func_t = std::function<Error(entt::registry& reg, entt::entity e)>;
+        std::vector<func_t> factories;
+
+        Error Spawn(entt::registry& reg, entt::entity e) const;
+    };
+
     class Module {
     private:
         ModuleDesc _desc;
 
     public:
+        virtual void RegisterPrototypes(std::unordered_map<std::string, Prototype>& prototype) const;
+
         virtual Error Initialize(entt::registry& registry) const = 0;
         virtual Error PreExecute(entt::registry& registry) const = 0;
         virtual Error PostExecute(entt::registry& registry) const = 0;
@@ -211,6 +221,7 @@ namespace okami {
     struct EngineDesc {
         std::vector<std::shared_ptr<Module>> modules;
         UnorderedTypeMap<std::shared_ptr<Module>> modulesByType;
+        std::unordered_map<std::string, Prototype> prototypes;
     };
 
     class Engine {
@@ -218,6 +229,9 @@ namespace okami {
         struct Impl;
 
         EngineDesc _desc;
+
+        void RegisterDefaultPrototypes();
+        void CreateDefaultModules();
 
     public:
         Engine();
@@ -236,6 +250,7 @@ namespace okami {
         template <ModuleType T, typename... ParamTs>
         std::shared_ptr<T> Add(ParamTs&&... params) {
             auto modul = std::make_shared<T>(std::forward<ParamTs>(params)...);
+            modul->RegisterPrototypes(_desc.prototypes);
             _desc.modules.emplace_back(modul);
             _desc.modulesByType.emplace(entt::resolve<T>(), modul);
             return modul;
@@ -245,5 +260,14 @@ namespace okami {
         Error Initialize(entt::registry& registry) const;
         Error Destroy(entt::registry& registry) const;
         Error Execute(entt::registry& registry) const;
+
+        ExpectedRef<Prototype const> GetPrototype(std::string const& prototype) const;
+        inline ExpectedRef<Prototype const> GetPrototype(std::string_view prototype) const {
+            return GetPrototype(std::string{prototype});
+        }
+        Error Spawn(entt::registry& registry, entt::entity e, std::string const& prototype) const;
+        inline Error Spawn(entt::registry& registry, entt::entity e, std::string_view prototype) const {
+            return Spawn(registry, e, std::string{prototype});
+        }
     };
 }

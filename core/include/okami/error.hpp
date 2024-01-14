@@ -6,6 +6,10 @@
 #include <optional>
 #include <nonstd/expected.hpp>
 
+namespace okami::log {
+    void Init();
+}
+
 namespace okami {
     struct Error;
 
@@ -19,7 +23,7 @@ namespace okami {
 
     struct GlfwError {
         int code;
-        const char* description;
+        std::string description;
     };
 
     struct MultipleErrors {
@@ -139,6 +143,22 @@ namespace okami {
             return {};
         } else {
             return &ref.value.value().get();
+        }
+    }
+
+    void Log(Error const& err);
+
+    template <typename T>
+    void Log(Expected<T> const& exp) {
+        if (!exp.has_value()) {
+            return Log(exp.error());
+        }
+    }
+
+    template <typename T>
+    void Log(ExpectedRef<T> const& exp) {
+        if (!exp.value.has_value()) {
+            return Log(exp.value.error());
         }
     }
 

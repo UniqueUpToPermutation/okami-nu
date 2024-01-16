@@ -25,6 +25,13 @@ namespace okami {
 
         Transform Inverse() const;
 
+        static Transform Translate(glm::vec3 t);
+        static Transform Translate(float x, float y, float z);
+        static Transform Translate(float x, float y);
+        static Transform Rotate(glm::quat q);
+        static Transform Rotate2D(float radians);
+        static Transform Scale(float scale);
+
         glm::mat4x4 ToMatrix4x4() const;
     };
 

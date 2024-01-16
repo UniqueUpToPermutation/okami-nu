@@ -24,7 +24,10 @@ set<string> important_ext = {
 	".hlsl",
 	".csh",
 	".gsh",
-    ".glsl"
+    ".glsl",
+	".vs",
+	".fs",
+	".gs"
 };
 
 void write_into_lookup(

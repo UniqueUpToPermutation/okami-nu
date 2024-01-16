@@ -68,7 +68,7 @@ Error okami::GLRendererModule::PostExecute(Registry& registry) const {
             auto camera = GetProperty<Camera>(registry, cameraEntity).value_or(Camera{});
             auto transform = GetProperty<Transform>(registry, cameraEntity).value_or(Transform{});
 
-            CameraRenderData renderCamera {
+            RenderView renderCamera {
                 .camera = camera,
                 .viewport = windowSize.AsVec2(),
                 .viewTransform = Inverse(transform)

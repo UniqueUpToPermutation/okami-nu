@@ -6,6 +6,8 @@
 #include <okami/vertex_format.hpp>
 #include <glad/glad.h>
 
+#include <span>
+
 namespace okami {
     template <void(Destructor)(GLuint)>
     struct GLuintObject {
@@ -13,7 +15,16 @@ namespace okami {
 
         GLuintObject() = default;
         inline GLuintObject(GLuint id) : id(id) {}
-        OKAMI_MOVE_ONLY(GLuintObject);
+        GLuintObject(GLuintObject const&) = delete;
+        GLuintObject& operator=(GLuintObject const&) = delete;
+        GLuintObject& operator=(GLuintObject&& obj) {
+            id = obj.id;
+            obj.id = 0u;
+            return *this;
+        }
+        inline GLuintObject(GLuintObject&& obj) {
+            *this = std::move(obj);
+        }
 
         ~GLuintObject() {
             if (id != 0u) {
@@ -38,6 +49,8 @@ namespace okami {
     void DestroyGLProgram(GLuint id);
     struct GLProgram final : public GLuintObject<DestroyGLProgram> {
         using GLuintObject::GLuintObject;
+
+        Expected<GLint> GetUniformLocation(const char* s) const;
     };
 
     void DestroyGLBuffer(GLuint id);
@@ -61,9 +74,12 @@ namespace okami {
         GLenum shaderType,
         ShaderPreprocessorConfig const& config = {});
 
+    Expected<GLProgram> CreateProgram(std::span<GLuint const> shaders);
+
     ErrorDetails GetErrorGL();
 
     GLenum ToGL(ValueType valueType);
+    GLenum ToGL(Topology topo);
 
     #define OKAMI_ERR_GL(statement) \
         statement; \

@@ -13,7 +13,7 @@ Error okami::GLRenderer::BeginColorPass() {
     return {};
 }
 
-Error okami::GLRenderer::DrawIm3d(CameraRenderData const& camera, Im3d::Context& context) {
+Error okami::GLRenderer::DrawIm3d(RenderView const& camera, Im3d::Context& context) {
     im3d.Draw(context, camera.viewport.x, camera.viewport.y);
     return {};
 }

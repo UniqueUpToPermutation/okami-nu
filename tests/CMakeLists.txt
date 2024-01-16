@@ -1,1 +1,3 @@
-add_subdirectory(HelloWorld)
+add_subdirectory(common)
+add_subdirectory(hello_world)
+add_subdirectory(ogl_static_mesh)

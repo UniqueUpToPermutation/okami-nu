@@ -1,5 +1,7 @@
 #include <okami/transform.hpp>
 
+#include <glm/gtx/quaternion.hpp>
+
 using namespace okami;
 
 Transform& okami::Transform::operator*=(Transform const& other) {
@@ -47,4 +49,32 @@ Transform okami::Inverse(Transform const& transform) {
         glm::conjugate(transform.rotation),
         1.0f / transform.scale
     );
+}
+
+glm::mat4 okami::Transform::ToMatrix4x4() const {
+    auto mat = glm::mat4_cast(rotation);
+    mat[0] *= scale;
+    mat[1] *= scale;
+    mat[2] *= scale;
+    mat[3] = glm::vec4(translation, 1.0f);
+    return mat;
+}
+
+Transform Transform::Translate(glm::vec3 t) {
+    return Transform(t);
+}
+Transform Transform::Translate(float x, float y, float z) {
+    return Translate(glm::vec3(x, y, z));
+}
+Transform Transform::Translate(float x, float y) {
+    return Translate(glm::vec3(x, y, 0.0f));
+}
+Transform Transform::Rotate(glm::quat q) {
+    return Transform(glm::zero<glm::vec3>(), q);
+}
+Transform Transform::Rotate2D(float radians) {
+    return Rotate(glm::angleAxis(radians, glm::vec3(0.0f, 0.0f, 1.0f)));
+}
+Transform Transform::Scale(float scale) {
+    return Transform(glm::zero<glm::vec3>(), glm::identity<glm::quat>(), scale);
 }

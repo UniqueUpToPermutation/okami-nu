@@ -14,7 +14,7 @@ file(GLOB MAIN_SOURCES ${SOURCES_DIR}/*.cpp)
 file(GLOB MAIN_HEADERS ${HEADER_DIR}/*.hpp)
 
 file(GLOB_RECURSE shader_SRC CONFIGURE_DEPENDS 
-    "shaders/ogl/*.glsl")
+    "shaders/ogl/*.glsl" "shaders/ogl/*.vs" "shaders/ogl/*.fs")
 
 message("Embedded Shaders: ${shader_SRC}")
 

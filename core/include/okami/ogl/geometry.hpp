@@ -14,5 +14,6 @@ namespace okami {
         OKAMI_MOVE_ONLY(GLGeometry);
 
         static Expected<GLGeometry> Create(Geometry const& geometry);
+        static Expected<GLGeometry> Create(Geometry&& geometry);
     };
 }

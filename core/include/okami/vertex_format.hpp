@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <vector>
 
+#include <okami/error.hpp>
+
 namespace okami {
     enum class ValueType {
         UNDEFINED = 0,
@@ -36,7 +38,7 @@ namespace okami {
         uint32_t numComponents = 0;
         ValueType valueType = ValueType::FLOAT32;
         bool isNormalized = true;
-        size_t relativeOffset = LAYOUT_ELEMENT_AUTO_OFFSET;
+        std::size_t relativeOffset = LAYOUT_ELEMENT_AUTO_OFFSET;
         uint32_t stride = LAYOUT_ELEMENT_AUTO_STRIDE;
         InputElementFrequency frequency = InputElementFrequency::PER_VERTEX;
         uint32_t instanceDataStepRate = 1;
@@ -136,6 +138,7 @@ namespace okami {
         Topology topology = Topology::TRIANGLE_LIST;
 
 		std::vector<int> uvs;
+        std::vector<int> uvws;
 		std::vector<int> colors;
 
 		inline bool operator==(const VertexFormat& other) const
@@ -146,6 +149,7 @@ namespace okami {
 				bitangent == other.bitangent &&
 				topology == other.topology &&
 				uvs == other.uvs &&
+                uvws == other.uvws &&
 				colors == other.colors;
 		}
 		
@@ -154,6 +158,7 @@ namespace okami {
 		static VertexFormat PositionUVNormalTangentBitangent();
         static VertexFormat PositionUV();
         static VertexFormat Position();
+        static VertexFormat PositionColor();
 
 		template <class Archive>
 		void serialize(Archive& archive) {
@@ -165,8 +170,13 @@ namespace okami {
 			archive(bitangent);
 
 			archive(uvs);
+            archive(uvws);
 			archive(colors);
+            
             archive(topology);
 		}
+
+        Error AutoLayout();
+        Error CheckValid() const;
 	};
 }

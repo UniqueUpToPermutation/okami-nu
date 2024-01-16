@@ -1,8 +1,9 @@
 #pragma once
 
-#include <glm/glm.hpp>
 #include <variant>
+#include <optional>
 
+#include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 
 #include <okami/transform.hpp>
@@ -20,6 +21,8 @@ namespace okami {
     };
 
     struct CameraVariantOrtho {
+        // Overrides viewport if set
+        std::optional<glm::vec2> extents;
     };
 
     struct CameraVariantPerspective {
@@ -33,14 +36,16 @@ namespace okami {
     glm::mat4x4 Projection(CameraVariant const& props, glm::vec2 viewport, float near, float far);
 
     struct Camera {
-        CameraVariant variant;
-        float near = 0.1f;
-        float far = 100.0f;
+        CameraVariant variant = CameraVariantOrtho{
+            .extents = glm::vec2(2.0f, 2.0f)
+        };
+        float near = -1.0f;
+        float far = 1.0f;
 
         glm::mat4x4 GetProjMatrix(glm::vec2 viewport) const;
     };
 
-    struct CameraRenderData {
+    struct RenderView {
         Camera camera;
         glm::vec2 viewport;
         Transform viewTransform;

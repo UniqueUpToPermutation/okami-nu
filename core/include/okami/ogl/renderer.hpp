@@ -18,7 +18,7 @@ namespace okami {
 
         Error Initialize();
         Error BeginColorPass();
-        Error DrawIm3d(CameraRenderData const& camera, Im3d::Context& context);
+        Error DrawIm3d(RenderView const& camera, Im3d::Context& context);
         Error Destroy();
     };
 }

@@ -30,16 +30,22 @@ namespace okami {
         std::vector<Error> errors;
     };
 
+    struct MissingUniformError {
+        const char* name;
+    };
+
     std::ostream& operator<<(std::ostream& os, const GlfwError& err);
     std::ostream& operator<<(std::ostream& os, const RuntimeError& err);
     std::ostream& operator<<(std::ostream& os, const MultipleErrors& err);
     std::ostream& operator<<(std::ostream& os, const InvalidPathError& err);
+    std::ostream& operator<<(std::ostream& os, const MissingUniformError& err);
 
     using ErrorDetails = std::variant<
         std::monostate, 
         GlfwError, 
         RuntimeError,
         InvalidPathError,
+        MissingUniformError,
         MultipleErrors>;
     struct Error;
 
@@ -68,6 +74,13 @@ namespace okami {
         T* Unwrap(ExpectedRef<T>&& ref);
     };
 
+    template <typename T>
+    struct is_error : std::false_type {};
+    template <>
+    struct is_error<Error> : std::true_type {};
+    template <typename T>
+    constexpr bool is_error_v = is_error<T>::value;
+
     std::ostream& operator<<(std::ostream& os, const Error& err);
 
     Error operator|(Error const& err1, Error const& err2);
@@ -89,6 +102,18 @@ namespace okami {
         inline ExpectedRef(T& ref) : value(ref) {}
         inline ExpectedRef(nonstd::unexpected<Error> err) : value(err) {}
     };
+
+    template <typename T>
+    struct is_expected : std::false_type {};
+    template <typename T>
+    struct is_expected<Expected<T>> : std::true_type {};
+    template <typename T>
+    struct is_expected<ExpectedRef<T>> : std::true_type {};
+    template <typename T>
+    constexpr bool is_expected_v = is_expected<T>::value;
+
+    template <typename T>
+    constexpr bool is_expected_or_error_v = std::disjunction<is_expected<T>, is_error<T>>::value;
 
     inline bool IsError(ErrorDetails err) {
         return !std::holds_alternative<std::monostate>(err);
@@ -146,19 +171,29 @@ namespace okami {
         }
     }
 
-    void Log(Error const& err);
+    void Log(Error const& err, bool isWarning = false);
 
     template <typename T>
-    void Log(Expected<T> const& exp) {
+    void Log(Expected<T> const& exp, bool isWarning = false) {
         if (!exp.has_value()) {
-            return Log(exp.error());
+            return Log(exp.error(), isWarning);
         }
     }
 
     template <typename T>
-    void Log(ExpectedRef<T> const& exp) {
+    void Log(ExpectedRef<T> const& exp, bool isWarning = false) {
         if (!exp.value.has_value()) {
-            return Log(exp.value.error());
+            return Log(exp.value.error(), isWarning);
+        }
+    }
+
+    template <typename T>
+    T UnwrapAndWarn(Expected<T>&& expected, T&& defaultValue) {
+        if (expected.has_value()) {
+            return std::move(expected.value());
+        } else {
+            Log(expected, true);
+            return std::move(defaultValue);
         }
     }
 
@@ -171,24 +206,28 @@ namespace okami {
             OKAMI_ERR_SET(err, errDetails); \
         } 
     #define OKAMI_ERR_RETURN(err) \
+        static_assert(is_expected_or_error_v<std::decay_t<decltype(err)>>, \
+            "Type of argument must be error or expected!"); \
         if (IsError(err)) { \
             return MakeError(err); \
         } 
     #define OKAMI_ERR_RETURN_IF(cond, errDetails) \
         { \
-            Error err; \
-            OKAMI_ERR_IF(cond, err, errDetails); \
-            OKAMI_ERR_RETURN(err); \
+            Error err____reserved; \
+            OKAMI_ERR_IF(cond, err____reserved, errDetails); \
+            OKAMI_ERR_RETURN(err____reserved); \
         }
     #define OKAMI_EXP_RETURN(err) \
+        static_assert(is_expected_or_error_v<std::decay_t<decltype(err)>>, \
+            "Type of argument must be error or expected!"); \
         if (IsError(err)) { \
             return MakeUnexpected(err); \
         }
     #define OKAMI_EXP_RETURN_IF(cond, errDetails) \
         { \
-            Error err; \
-            OKAMI_ERR_IF(cond, err, errDetails); \
-            OKAMI_EXP_RETURN(err); \
+            Error err____reserved; \
+            OKAMI_ERR_IF(cond, err____reserved, errDetails); \
+            OKAMI_EXP_RETURN(err____reserved); \
         }
     #define OKAMI_ERR_UNWRAP(statement, error) \
         error.Unwrap([&]() { return statement; }()) \
@@ -200,15 +239,15 @@ namespace okami {
         OKAMI_EXP_RETURN(error);
     #define OKAMI_ERR_UNWRAP_INTO(dest, statement) \
         { \
-            auto result = statement; \
-            OKAMI_ERR_RETURN(result); \
-            dest = std::move(result.value()); \
+            auto result____reserved = statement; \
+            OKAMI_ERR_RETURN(result____reserved); \
+            dest = std::move(result____reserved.value()); \
         }
     #define OKAMI_EXP_UNWRAP_INTO(dest, statement) \
         { \
-            auto result = statement; \
-            OKAMI_EXP_RETURN(result); \
-            dest = std::move(result.value()); \
+            auto result____reserved = statement; \
+            OKAMI_EXP_RETURN(result____reserved); \
+            dest = std::move(result____reserved.value()); \
         }
     #define OKAMI_ERR_RETURN_IF_FAIL(statement) \
         { \

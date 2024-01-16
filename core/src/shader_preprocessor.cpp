@@ -6,6 +6,12 @@
 
 #include <regex>
 
+#define OUTPUT_SHADER_CONTENTS 0
+
+#if OUTPUT_SHADER_CONTENTS
+#include <plog/Log.h>
+#endif
+
 using namespace okami;
 
 std::string okami::ShaderPreprocessorConfig::Stringify(const ShaderPreprocessorConfig* overrides) const {
@@ -51,23 +57,39 @@ Error okami::ShaderPreprocessor::Load(
     auto contents = OKAMI_ERR_UNWRAP(fileLoader.Find(source), err);
     output->sources.emplace_back(source);
 
+    // Numbers to begin processing
+    size_t last_include_pos = 0;
+    size_t current_line = 0;
+
+    // If the first thing is version then this must be the first line of the program
+    // So include before preprocessor definitions and overrides
+    std::optional<std::string_view> versionInfo;
+    if (contents.substr(0, 8) == "#version") {
+        auto breakPos = contents.find('\n');
+
+        versionInfo = contents.substr(0, breakPos);
+        current_line += 1;
+        last_include_pos = breakPos;
+    }
+
     // Write preprocessed string
     std::stringstream& ss = streamOut;
     if (alreadyVisited.size() == 1) {
-        ss << defaults.Stringify(overrides) << std::endl;
+        if (versionInfo) {
+            ss << *versionInfo << "\n";
+        }
+        ss << defaults.Stringify(overrides) << "\n";
     }
 
     auto sourceStr = source.string();
 
     // Reset line numbers
     if (bAddLineNumbers)
-        ss << std::endl << "#line 1 \"" << 
+        ss << std::endl << "#line " << current_line + 1 << " \"" << 
             sourceStr << "\"" << std::endl; 
 
     // Find all includes
     size_t include_pos = contents.find("#include");
-    size_t last_include_pos = 0;
-    size_t current_line = 0;
     while (include_pos != std::string::npos) {
 
         current_line += std::count(
@@ -154,5 +176,10 @@ Expected<ShaderPreprocessorOutput> okami::ShaderPreprocessor::Load(
     output.content = streamOut.str();
     output.content = std::regex_replace(
         output.content, std::regex("#pragma[^\n]*\n"), "\n");
+
+#if OUTPUT_SHADER_CONTENTS
+    PLOG_INFO << "Preprocessed Shader: " << source << "\n" << output.content;
+#endif 
+
     return output;
 }

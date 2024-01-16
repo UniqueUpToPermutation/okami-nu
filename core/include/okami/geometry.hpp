@@ -54,6 +54,7 @@ namespace okami {
 			std::vector<Vec3Type> tangents;
 			std::vector<Vec3Type> bitangents;
 			std::vector<std::vector<Vec4Type>> colors;
+			std::vector<std::vector<Vec3Type>> uvws;
 
 			template <typename Archive>
 			void serialize(Archive& arr) {
@@ -64,6 +65,7 @@ namespace okami {
 				arr(tangents);
 				arr(bitangents);
 				arr(colors);
+				arr(uvws);
 			}
 
 			static Data<
@@ -83,13 +85,14 @@ namespace okami {
 			size_t vertexCount;
 			size_t indexCount;
 
-			const IndexType* indices;
-			const Vec3Type* positions;
-			std::vector<const Vec2Type*> uvs;
-			const Vec3Type* normals;
-			const Vec3Type* tangents;
-			const Vec3Type* bitangents;
-			std::vector<const Vec4Type*> colors;
+			IndexType const* indices;
+			Vec3Type const* positions;
+			std::vector<Vec2Type const*> uvs;
+			Vec3Type const* normals;
+			Vec3Type const* tangents;
+			Vec3Type const* bitangents;
+			std::vector<Vec4Type const*> colors;
+			std::vector<Vec3Type const*> uvws;
 
 			inline DataView(
 				const Data<IndexType, Vec2Type, Vec3Type, Vec4Type>& data) :
@@ -101,11 +104,17 @@ namespace okami {
 				tangents(data.tangents.size() > 0 ? &data.tangents[0] : nullptr),
 				bitangents(data.bitangents.size() > 0 ? &data.bitangents[0] : nullptr) {
 
-				for (auto& uv : data.uvs) 
+				for (auto& uv : data.uvs) {
 					uvs.emplace_back(&uv[0]);
+				}
+
+				for (auto& uvw : data.uvws) {
+					uvws.emplace_back(&uvw[0]);
+				}
 				
-				for (auto& colors : data.colors) 
-					this->colors.emplace_back(&colors[0]);
+				for (auto& color : data.colors)  {
+					colors.emplace_back(&color[0]);
+				}
 			}
 
 			DataView(
@@ -117,7 +126,8 @@ namespace okami {
 				const Vec3Type normals[] = nullptr,
 				const Vec3Type tangents[] = nullptr,
 				const Vec3Type bitangents[] = nullptr,
-				const std::vector<const Vec4Type*>& colors = {}) : 
+				const std::vector<const Vec4Type*>& colors = {},
+				const std::vector<const Vec3Type*>& uvws = {}) : 
 				vertexCount(vertexCount),
 				indexCount(indexCount),
 				indices(indices),
@@ -126,7 +136,8 @@ namespace okami {
 				normals(normals),
 				tangents(tangents),
 				bitangents(bitangents),
-				colors(colors) {
+				colors(colors),
+				uvws(uvws) {
 			}
 
 			DataView(
@@ -138,7 +149,8 @@ namespace okami {
 				const Vec3Type normals[] = nullptr,
 				const Vec3Type tangents[] = nullptr,
 				const Vec3Type bitangents[] = nullptr,
-				const Vec4Type colors[] = nullptr) :
+				const Vec4Type colors[] = nullptr,
+				const Vec3Type uvws[] = nullptr) :
 				DataView(vertexCount,
 					indexCount,
 					indices,
@@ -147,7 +159,8 @@ namespace okami {
 					normals,
 					tangents,
 					bitangents,
-					std::vector<const Vec4Type*>{colors}) {
+					std::vector<const Vec4Type*>{colors},
+					std::vector<const Vec2Type*>{uvws}) {
 			}
 			
 			DataView(size_t vertexCount,
@@ -156,7 +169,8 @@ namespace okami {
 				const Vec3Type normals[] = nullptr,
 				const Vec3Type tangents[] = nullptr,
 				const Vec3Type bitangents[] = nullptr,
-				const std::vector<const Vec4Type*>& colors = {}) :
+				const std::vector<const Vec4Type*>& colors = {},
+				const std::vector<const Vec3Type*>& uvws = {}) :
 				DataView(vertexCount,
 					0,
 					nullptr,
@@ -165,7 +179,8 @@ namespace okami {
 					normals,
 					tangents,
 					bitangents,
-					colors) {
+					colors,
+					uvws) {
 			}
 
 			DataView(size_t vertexCount,
@@ -174,7 +189,8 @@ namespace okami {
 				const Vec3Type normals[] = nullptr,
 				const Vec3Type tangents[] = nullptr,
 				const Vec3Type bitangents[] = nullptr,
-				const Vec4Type colors[] = nullptr) : 
+				const Vec4Type colors[] = nullptr,
+				const Vec3Type uvws[] = nullptr) : 
 				DataView(vertexCount,
 					0,
 					nullptr,
@@ -183,7 +199,8 @@ namespace okami {
 					normals,
 					tangents,
 					bitangents,
-					{colors}) {
+					{colors},
+					{uvws}) {
 			}
 
 			bool HasIndices() const {
@@ -226,6 +243,9 @@ namespace okami {
 			template <typename I3T, typename V2T, typename V3T, typename V4T>
 			static Geometry Pack(const VertexFormat& layout,
 				const DataView<I3T, V2T, V3T, V4T>& data);
+			template <typename I3T, typename V2T, typename V3T, typename V4T>
+			static Geometry Pack(const VertexFormat& layout,
+				const Data<I3T, V2T, V3T, V4T>& data);
 
 			template <typename I3T = uint32_t, 
 				typename V2T = glm::vec2, 
@@ -599,6 +619,10 @@ namespace okami {
 			std::vector<int> colorChannels = {};
 			std::vector<int> colorStrides = {};
 
+			std::vector<int> uvwOffsets = {};
+			std::vector<int> uvwChannels = {};
+			std::vector<int> uvwStrides = {};
+
 			std::vector<size_t> channelSizes;
 
 			static PackIndexing From(const VertexFormat& layout,
@@ -610,6 +634,10 @@ namespace okami {
 			const DataView<I3T, V2T, V3T, V4T>& data) {
 
 			Geometry result;
+
+			if (layout.CheckValid().IsError()) {
+				throw std::runtime_error("Invalid vertex format!");
+			}
 
 			size_t vertex_count = data.vertexCount;
 			size_t index_count = data.indexCount;
@@ -705,6 +733,18 @@ namespace okami {
 				}
 			}
 
+			for (uint32_t iuvw = 0; iuvw < indexing.uvwChannels.size(); ++iuvw) {
+				auto& vertexChannel = vert_buffers[indexing.uvwChannels[iuvw]];
+				auto arr = &vertexChannel[indexing.uvwOffsets[iuvw]];
+				if (iuvw < data.uvws.size()) {
+					ArraySliceCopyToBytes<float, V3T, &V3Packer<V3T>::Pack>(
+						arr, &data.uvws[iuvw][0], indexing.uvwStrides[iuvw],
+							V3Packer<V3T>::kStride, vertex_count);
+				} else {
+					ArraySliceFillBytes<float, 3>(arr, 0.0f, indexing.uvwStrides[iuvw], vertex_count);
+				}
+			}
+
 			if (data.indices != nullptr && data.indexCount > 0) {
 				ArraySliceCopy<uint32_t, I3T, &I3Packer<I3T>::Pack>(
 					&indx_buffer[0], &data.indices[0], 3, 
@@ -739,6 +779,12 @@ namespace okami {
 			result.boundingBox = aabb;
 
 			return result;
+		}
+
+		template <typename I3T, typename V2T, typename V3T, typename V4T>
+		Geometry Geometry::Pack(const VertexFormat& layout,
+			const Data<I3T, V2T, V3T, V4T>& data) {
+			return Pack(layout, DataView(data));
 		}
 
 		template <typename I3T, typename V2T, typename V3T, typename V4T>

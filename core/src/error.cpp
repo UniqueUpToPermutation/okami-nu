@@ -15,14 +15,18 @@ void okami::log::Init() {
     plog::init(plog::debug, &consoleAppender);
 }
 
-void okami::Log(Error const& err) {
+void okami::Log(Error const& err, bool isWarning) {
     if (err.IsError()) {
         if (auto multi = std::get_if<MultipleErrors>(&err.details)) {
             for (auto const& subErr : multi->errors) {
-                Log(subErr);
+                Log(subErr, isWarning);
             }
         } else {
-            PLOG_ERROR << err.ToString();
+            if (isWarning) {
+                PLOG_WARNING << err.ToString();
+            } else {
+                PLOG_ERROR << err.ToString();
+            }
         }
     }
 }
@@ -47,6 +51,11 @@ std::ostream& okami::operator<<(std::ostream& os, const MultipleErrors& errs) {
 
 std::ostream& okami::operator<<(std::ostream& os, const InvalidPathError& err) {
     os << "Invalid Path: " << err.path;
+    return os;
+}
+
+std::ostream& okami::operator<<(std::ostream& os, const MissingUniformError& err) {
+    os << "Missing uniform: " << err.name;
     return os;
 }
 

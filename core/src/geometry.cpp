@@ -326,6 +326,14 @@ PackIndexing okami::geometry::PackIndexing::From(
         indexing.colorStrides.emplace_back(strides[color]);
     }
 
+    for (auto& uvw : layout.uvws) {
+        auto& uvwAttrib = layoutElements[uvw];
+        verifyAttrib(uvwAttrib);
+        indexing.uvwOffsets.emplace_back(offsets[uvw]);
+        indexing.uvwChannels.emplace_back(uvwAttrib.bufferSlot);
+        indexing.uvwStrides.emplace_back(strides[uvw]);
+    }
+
     return indexing;
 }
 

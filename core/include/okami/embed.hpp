@@ -33,6 +33,11 @@ namespace okami {
 	public:
 		void Add(const embedded_file_loader_t& factory);
 
+		inline auto begin() { return _internalShaders.begin(); }
+		inline auto end() { return _internalShaders.end(); }
+		inline auto begin() const { return _internalShaders.begin(); }
+		inline auto end() const { return _internalShaders.end(); }
+
         EmbeddedFileLoader() = default;
 		~EmbeddedFileLoader() = default;
 

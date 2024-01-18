@@ -45,7 +45,9 @@ namespace okami {
     public:
         static Expected<GLStaticMeshRenderer> Create();
 
-        static VertexFormat GetVertexFormat();
+        inline static VertexFormatInfo GetVertexFormat() {
+            return VertexFormatInfo::PositionUV();
+        }
         Error Draw(RenderView const& camera, std::span<GLStaticMeshRenderCall const> meshes) const;
     };
 }

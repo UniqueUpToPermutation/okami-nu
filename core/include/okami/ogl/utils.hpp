@@ -66,7 +66,7 @@ namespace okami {
 
         static Expected<GLVertexArray> Create(
             
-            VertexFormat const& format);
+            VertexFormatInfo const& format);
     };
 
     Expected<GLShader> LoadEmbeddedGLShader(

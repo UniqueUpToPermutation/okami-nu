@@ -43,8 +43,7 @@ namespace okami {
         InputElementFrequency frequency = InputElementFrequency::PER_VERTEX;
         uint32_t instanceDataStepRate = 1;
 
-		inline bool operator==(const LayoutElement& other) const
-		{
+		inline bool operator==(const LayoutElement& other) const {
 			return inputIndex == other.inputIndex &&
 				bufferSlot == other.bufferSlot &&
 				numComponents == other.numComponents &&
@@ -126,7 +125,17 @@ namespace okami {
         LINE_STRIP
     };
 
-    struct VertexFormat {
+    enum class VertexFormat {
+        Position,
+        PositionColor,
+        PositionUV,
+        PositionUVNormal,
+        PositionUVNormalTangent,
+        PositionUVNormalTangentBitangent,
+        Custom
+    };
+
+    struct VertexFormatInfo {
 	public:
 		std::vector<LayoutElement> elements;
 
@@ -135,30 +144,35 @@ namespace okami {
 		int tangent = -1;
 		int bitangent = -1;
 
-        Topology topology = Topology::TRIANGLE_LIST;
-
 		std::vector<int> uvs;
         std::vector<int> uvws;
 		std::vector<int> colors;
 
-		inline bool operator==(const VertexFormat& other) const
-		{
-			return elements == other.elements &&
-				position == other.position &&
-				normal == other.normal &&
-				bitangent == other.bitangent &&
-				topology == other.topology &&
-				uvs == other.uvs &&
-                uvws == other.uvws &&
-				colors == other.colors;
+        VertexFormat formatTag;
+
+		inline bool operator==(const VertexFormatInfo& other) const {
+            if (other.formatTag != formatTag) {
+                return false;
+            } else if (formatTag == VertexFormat::Custom) {
+                return elements == other.elements &&
+                    position == other.position &&
+                    normal == other.normal &&
+                    bitangent == other.bitangent &&
+                    uvs == other.uvs &&
+                    uvws == other.uvws &&
+                    colors == other.colors;
+            } else {
+                return true;
+            }
 		}
 		
-		static VertexFormat PositionUVNormalTangent();
-		static VertexFormat PositionUVNormal();
-		static VertexFormat PositionUVNormalTangentBitangent();
-        static VertexFormat PositionUV();
-        static VertexFormat Position();
-        static VertexFormat PositionColor();
+        static Expected<VertexFormatInfo> From(VertexFormat format);
+		static VertexFormatInfo PositionUVNormalTangent();
+		static VertexFormatInfo PositionUVNormal();
+		static VertexFormatInfo PositionUVNormalTangentBitangent();
+        static VertexFormatInfo PositionUV();
+        static VertexFormatInfo Position();
+        static VertexFormatInfo PositionColor();
 
 		template <class Archive>
 		void serialize(Archive& archive) {
@@ -172,8 +186,6 @@ namespace okami {
 			archive(uvs);
             archive(uvws);
 			archive(colors);
-            
-            archive(topology);
 		}
 
         Error AutoLayout();

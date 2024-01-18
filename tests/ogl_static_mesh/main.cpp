@@ -26,13 +26,13 @@ Error TestMain() {
                 glm::vec3(0.5f, -0.5f, 0.0f),
                 glm::vec3(-0.5f, -0.5f, 0.0f)
             },
-            .colors = {
+            .uvs = {
                 {
-                    glm::vec4(1.0f, 0.0f, 0.0f, 1.0f),
-                    glm::vec4(0.0f, 1.0f, 0.0f, 1.0f),
-                    glm::vec4(0.0f, 0.0f, 1.0f, 1.0f)
+                    glm::vec2(0.5f, 0.0f),
+                    glm::vec2(1.0f, 1.0f),
+                    glm::vec2(0.0f, 1.0f)
                 }
-            }
+            },
         };
 
         Geometry geometry = Geometry::Pack(layout, data);
@@ -48,12 +48,21 @@ Error TestMain() {
             GLStaticMeshRenderCall{
                 .geometry = gpuGeometry,
                 .material = material,
-                .transform = Transform::Translate(-0.5f, 0.5f) * Transform::Rotate2D(glm::pi<float>())
+                .transform = Transform::Translate(-0.5f, 0.5f) * 
+                    Transform::Rotate2D(glm::pi<float>())
             },
             GLStaticMeshRenderCall{
                 .geometry = gpuGeometry,
                 .material = material,
-                .transform = Transform::Translate(-0.5f, -0.5f) * Transform::Scale(0.5f)
+                .transform = Transform::Translate(-0.5f, -0.5f) * 
+                    Transform::Scale(0.5f)
+            },
+            GLStaticMeshRenderCall{
+                .geometry = gpuGeometry,
+                .material = material,
+                .transform = Transform::Translate(0.5f, -0.5f) * 
+                    Transform::Rotate2D(glm::pi<float>() / 2.f) * 
+                    Transform::Scale(0.5f)
             },
         };
 

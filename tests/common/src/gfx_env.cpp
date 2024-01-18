@@ -68,14 +68,6 @@ Expected<GfxEnvironment> GfxEnvironment::Create() {
     int version = gladLoadGL();
     OKAMI_EXP_RETURN_IF(!version, RuntimeError{"Failed to load OpenGL!"});
 
-    auto const& fs = GetEmbeddedGLShaderSources();
-    std::stringstream ss;
-    ss << "Embedded OpenGL Shaders:\n";
-    for (auto const& [name, result] : fs) {
-        ss << name << "\n";
-    }
-    PLOG_INFO << ss.str();
-
     return Expected<GfxEnvironment>(std::move(result));
 }
 

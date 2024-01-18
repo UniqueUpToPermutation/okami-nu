@@ -12,6 +12,7 @@ find_package(unofficial-im3d CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(plog CONFIG REQUIRED)
 find_package(assimp CONFIG REQUIRED)
+find_package(lodepng CONFIG REQUIRED)
 
 include(CTest)
 enable_testing()

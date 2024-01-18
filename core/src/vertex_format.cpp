@@ -25,9 +25,29 @@ int okami::GetSize(ValueType v) {
 	}
 }
 
-VertexFormat VertexFormat::Position() {
-	VertexFormat layout;
+#define VERTEX_FORMAT_CASE(x) \
+	case VertexFormat::x: \
+		return VertexFormatInfo::x()
+
+Expected<VertexFormatInfo> VertexFormatInfo::From(VertexFormat format) {
+	switch (format) {
+		VERTEX_FORMAT_CASE(Position);
+		VERTEX_FORMAT_CASE(PositionColor);
+		VERTEX_FORMAT_CASE(PositionUV);
+		VERTEX_FORMAT_CASE(PositionUVNormal);
+		VERTEX_FORMAT_CASE(PositionUVNormalTangent);
+		VERTEX_FORMAT_CASE(PositionUVNormalTangentBitangent);
+		default:
+			Error err;
+			OKAMI_ERR_SET(err, RuntimeError{"Could not get vertex format info!"});
+			return MakeUnexpected(err);
+	}
+}
+
+VertexFormatInfo VertexFormatInfo::Position() {
+	VertexFormatInfo layout;
 	layout.position = 0;
+	layout.formatTag = VertexFormat::Position;
 
 	std::vector<LayoutElement> layoutElements = {
 		LayoutElement(0, 0, 3, ValueType::FLOAT32, false, InputElementFrequency::PER_VERTEX)
@@ -38,8 +58,10 @@ VertexFormat VertexFormat::Position() {
 	return layout;
 }
 
-VertexFormat VertexFormat::PositionColor() {
-	VertexFormat layout;
+VertexFormatInfo VertexFormatInfo::PositionColor() {
+	VertexFormatInfo layout;
+	layout.formatTag = VertexFormat::PositionColor;
+
 	layout.position = 0;
 	layout.colors = {1};
 
@@ -53,8 +75,10 @@ VertexFormat VertexFormat::PositionColor() {
 	return layout;
 }
 
-VertexFormat VertexFormat::PositionUVNormalTangent() {
-	VertexFormat layout;
+VertexFormatInfo VertexFormatInfo::PositionUVNormalTangent() {
+	VertexFormatInfo layout;
+	layout.formatTag = VertexFormat::PositionUVNormalTangent;
+
 	layout.position = 0;
 	layout.uvs = {1};
 	layout.normal = 2;
@@ -72,8 +96,10 @@ VertexFormat VertexFormat::PositionUVNormalTangent() {
 	return layout;
 }
 
-VertexFormat VertexFormat::PositionUVNormal() {
-	VertexFormat layout;
+VertexFormatInfo VertexFormatInfo::PositionUVNormal() {
+	VertexFormatInfo layout;
+	layout.formatTag = VertexFormat::PositionUVNormal;
+
 	layout.position = 0;
 	layout.uvs = {1};
 	layout.normal = 2;
@@ -89,8 +115,10 @@ VertexFormat VertexFormat::PositionUVNormal() {
 	return layout;
 }
 
-VertexFormat VertexFormat::PositionUVNormalTangentBitangent() {
-	VertexFormat layout;
+VertexFormatInfo VertexFormatInfo::PositionUVNormalTangentBitangent() {
+	VertexFormatInfo layout;
+	layout.formatTag = VertexFormat::PositionUVNormalTangentBitangent;
+
 	layout.position = 0;
 	layout.uvs = {1};
 	layout.normal = 2;
@@ -110,8 +138,10 @@ VertexFormat VertexFormat::PositionUVNormalTangentBitangent() {
 	return layout;
 }
 
-VertexFormat VertexFormat::PositionUV() {
-	VertexFormat layout;
+VertexFormatInfo VertexFormatInfo::PositionUV() {
+	VertexFormatInfo layout;
+	layout.formatTag = VertexFormat::PositionUV;
+
 	layout.position = 0;
 	layout.uvs = {1};
 
@@ -126,7 +156,7 @@ VertexFormat VertexFormat::PositionUV() {
 }
 
 
-Error VertexFormat::CheckValid() const {
+Error VertexFormatInfo::CheckValid() const {
 	int numElements = static_cast<int>(elements.size());
 
 	OKAMI_ERR_RETURN_IF(position >= numElements, RuntimeError{"Invalid position index!"});
@@ -152,7 +182,7 @@ Error VertexFormat::CheckValid() const {
 	return {};
 }
 
-Error VertexFormat::AutoLayout() {
+Error VertexFormatInfo::AutoLayout() {
 	bool useAutoStride = false;
     bool useAutoOffset = false;
 

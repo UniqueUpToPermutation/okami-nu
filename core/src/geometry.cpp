@@ -41,7 +41,7 @@ namespace teapot {
 
 #include <iostream>
 
-Geometry okami::geometry::prefabs::MaterialBall(const VertexFormat& layout) {
+Geometry okami::geometry::prefabs::MaterialBall(const VertexFormatInfo& layout) {
     return Geometry(layout, 
         DataView
             <uint32_t, float, float, float>(
@@ -55,7 +55,7 @@ Geometry okami::geometry::prefabs::MaterialBall(const VertexFormat& layout) {
             matball::bitangents));
 }
 
-Geometry okami::geometry::prefabs::Box(const VertexFormat& layout) {
+Geometry okami::geometry::prefabs::Box(const VertexFormatInfo& layout) {
     return Geometry(layout, 
         DataView
             <uint32_t, float, float, float>(
@@ -69,7 +69,7 @@ Geometry okami::geometry::prefabs::Box(const VertexFormat& layout) {
             box::bitangents));
 }
 
-Geometry okami::geometry::prefabs::Sphere(const VertexFormat& layout) {
+Geometry okami::geometry::prefabs::Sphere(const VertexFormatInfo& layout) {
     return Geometry(layout, 
         DataView
             <uint32_t, float, float, float>(
@@ -83,7 +83,7 @@ Geometry okami::geometry::prefabs::Sphere(const VertexFormat& layout) {
             sphere::bitangents));
 }
 
-Geometry okami::geometry::prefabs::BlenderMonkey(const VertexFormat& layout) {
+Geometry okami::geometry::prefabs::BlenderMonkey(const VertexFormatInfo& layout) {
     return Geometry(layout, 
         DataView
             <uint32_t, float, float, float>(
@@ -97,7 +97,7 @@ Geometry okami::geometry::prefabs::BlenderMonkey(const VertexFormat& layout) {
             monkey::bitangents));
 }
 
-Geometry okami::geometry::prefabs::Torus(const VertexFormat& layout) {
+Geometry okami::geometry::prefabs::Torus(const VertexFormatInfo& layout) {
     return Geometry(layout, 
         DataView
             <uint32_t, float, float, float>(
@@ -111,7 +111,7 @@ Geometry okami::geometry::prefabs::Torus(const VertexFormat& layout) {
             torus::bitangents));
 }
 
-Geometry okami::geometry::prefabs::Plane(const VertexFormat& layout) {
+Geometry okami::geometry::prefabs::Plane(const VertexFormatInfo& layout) {
     return Geometry(layout, 
         DataView
             <uint32_t, float, float, float>(
@@ -125,7 +125,7 @@ Geometry okami::geometry::prefabs::Plane(const VertexFormat& layout) {
             plane::bitangents));
 }
 
-Geometry okami::geometry::prefabs::StanfordBunny(const VertexFormat& layout) {
+Geometry okami::geometry::prefabs::StanfordBunny(const VertexFormatInfo& layout) {
     return Geometry(layout, 
         DataView
             <uint32_t, float, float, float>(
@@ -139,7 +139,7 @@ Geometry okami::geometry::prefabs::StanfordBunny(const VertexFormat& layout) {
             bunny::bitangents));
 }
 
-Geometry okami::geometry::prefabs::UtahTeapot(const VertexFormat& layout) {
+Geometry okami::geometry::prefabs::UtahTeapot(const VertexFormatInfo& layout) {
     return Geometry(layout, 
         DataView
             <uint32_t, float, float, float>(
@@ -187,7 +187,7 @@ struct I3Packer<aiFace> {
 
 void okami::geometry::ComputeLayoutProperties(
     size_t vertex_count,
-    const VertexFormat& layout,
+    const VertexFormatInfo& layout,
     std::vector<size_t>& offsets,
     std::vector<size_t>& strides,
     std::vector<size_t>& channel_sizes) {
@@ -261,7 +261,7 @@ void okami::geometry::ComputeLayoutProperties(
 }
 
 PackIndexing okami::geometry::PackIndexing::From(
-    const VertexFormat& layout,
+    const VertexFormatInfo& layout,
     size_t vertex_count) {
 
     std::vector<size_t> offsets;
@@ -337,7 +337,7 @@ PackIndexing okami::geometry::PackIndexing::From(
     return indexing;
 }
 
-Geometry okami::geometry::Geometry::ToLayout(const VertexFormat& format) {
+Geometry okami::geometry::Geometry::ToLayout(const VertexFormatInfo& format) {
     return Geometry::Pack<
         uint32_t,
         glm::vec2,
@@ -361,7 +361,7 @@ Geometry okami::geometry::Geometry::Duplicate() {
 
 Geometry okami::geometry::Geometry::Load(
     const std::filesystem::path& path,
-    const VertexFormat& layout) {
+    const VertexFormatInfo& layout) {
 
     Assimp::Importer importer;
 
@@ -408,6 +408,6 @@ Geometry okami::geometry::Geometry::Load(
 
 Geometry okami::geometry::Load(
     const std::filesystem::path& path, 
-    const VertexFormat& layout) {
+    const VertexFormatInfo& layout) {
     return Geometry::Load(path, layout);
 }

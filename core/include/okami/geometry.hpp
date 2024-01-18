@@ -36,7 +36,8 @@ namespace okami {
 		};
 
 		struct Desc {
-			VertexFormat layout;
+			VertexFormatInfo layout;
+			Topology topology = Topology::TRIANGLE_LIST;
 			Attribs attribs;
 			IndexedAttribs indexedAttribs;
 			bool isIndexed;
@@ -74,7 +75,7 @@ namespace okami {
 				Vec3Type, 
 				Vec4Type> Load(
 					const std::filesystem::path& path,
-					const VertexFormat& layout);
+					const VertexFormatInfo& layout);
 		};
 
 		template <typename IndexType = uint32_t,
@@ -241,10 +242,10 @@ namespace okami {
 			}
 
 			template <typename I3T, typename V2T, typename V3T, typename V4T>
-			static Geometry Pack(const VertexFormat& layout,
+			static Geometry Pack(const VertexFormatInfo& layout,
 				const DataView<I3T, V2T, V3T, V4T>& data);
 			template <typename I3T, typename V2T, typename V3T, typename V4T>
-			static Geometry Pack(const VertexFormat& layout,
+			static Geometry Pack(const VertexFormatInfo& layout,
 				const Data<I3T, V2T, V3T, V4T>& data);
 
 			template <typename I3T = uint32_t, 
@@ -255,22 +256,22 @@ namespace okami {
 
 			static Geometry Load(
 				const std::filesystem::path& path,
-				const VertexFormat& layout);
+				const VertexFormatInfo& layout);
 
 			inline Geometry(
 				const std::filesystem::path& path,
-				const VertexFormat& layout) {
+				const VertexFormatInfo& layout) {
 				*this = Load(path, layout);
 			}
 
 			template <typename I3T, typename V2T, typename V3T, typename V4T>
-			inline Geometry(const VertexFormat& layout,
+			inline Geometry(const VertexFormatInfo& layout,
 				const DataView<I3T, V2T, V3T, V4T>& data) {
 				*this = Pack<I3T, V2T, V3T, V4T>(layout, data);
 			}
 
 			template <typename I3T, typename V2T, typename V3T, typename V4T>
-			inline Geometry(const VertexFormat& layout,
+			inline Geometry(const VertexFormatInfo& layout,
 				const Data<I3T, V2T, V3T, V4T>& data) :
 				Geometry(layout, DataView<I3T, V2T, V3T, V4T>(data)) {
 			}
@@ -284,7 +285,7 @@ namespace okami {
 			Geometry() = default;
 
 			Geometry Duplicate();
-			Geometry ToLayout(const VertexFormat& format);
+			Geometry ToLayout(const VertexFormatInfo& format);
 
 			inline void Dealloc() {
 				vertexBuffers.clear();
@@ -299,25 +300,25 @@ namespace okami {
 				return desc;
 			}
 
-			inline const VertexFormat& GetLayout() const {
+			inline VertexFormatInfo const& GetLayout() const {
 				return desc.layout;
 			}
 		};
 
 		namespace prefabs {
-			Geometry MaterialBall(const VertexFormat& layout);
-			Geometry Box(const VertexFormat& layout);
-			Geometry Sphere(const VertexFormat& layout);
-			Geometry BlenderMonkey(const VertexFormat& layout);
-			Geometry Torus(const VertexFormat& layout);
-			Geometry Plane(const VertexFormat& layout);
-			Geometry StanfordBunny(const VertexFormat& layout);
-			Geometry UtahTeapot(const VertexFormat& layout);
+			Geometry MaterialBall(const VertexFormatInfo& layout);
+			Geometry Box(const VertexFormatInfo& layout);
+			Geometry Sphere(const VertexFormatInfo& layout);
+			Geometry BlenderMonkey(const VertexFormatInfo& layout);
+			Geometry Torus(const VertexFormatInfo& layout);
+			Geometry Plane(const VertexFormatInfo& layout);
+			Geometry StanfordBunny(const VertexFormatInfo& layout);
+			Geometry UtahTeapot(const VertexFormatInfo& layout);
 		};
 
 		Geometry Load(
 			const std::filesystem::path& path, 
-			const VertexFormat& layout);
+			const VertexFormatInfo& layout);
 
 		template <typename T>
 		struct V4Packer;
@@ -587,7 +588,7 @@ namespace okami {
 		// of each of the geometry elements in the layout
 		void ComputeLayoutProperties(
 			size_t vertex_count,
-			const VertexFormat& layout,
+			const VertexFormatInfo& layout,
 			std::vector<size_t>& offsets,
 			std::vector<size_t>& strides,
 			std::vector<size_t>& channel_sizes);
@@ -625,12 +626,12 @@ namespace okami {
 
 			std::vector<size_t> channelSizes;
 
-			static PackIndexing From(const VertexFormat& layout,
+			static PackIndexing From(const VertexFormatInfo& layout,
 				size_t vertex_count);
 		};
 
 		template <typename I3T, typename V2T, typename V3T, typename V4T>
-		Geometry Geometry::Pack(const VertexFormat& layout,
+		Geometry Geometry::Pack(const VertexFormatInfo& layout,
 			const DataView<I3T, V2T, V3T, V4T>& data) {
 
 			Geometry result;
@@ -782,7 +783,7 @@ namespace okami {
 		}
 
 		template <typename I3T, typename V2T, typename V3T, typename V4T>
-		Geometry Geometry::Pack(const VertexFormat& layout,
+		Geometry Geometry::Pack(const VertexFormatInfo& layout,
 			const Data<I3T, V2T, V3T, V4T>& data) {
 			return Pack(layout, DataView(data));
 		}
@@ -878,7 +879,7 @@ namespace okami {
 			Vec3Type, 
 			Vec4Type>::Load(
 				const std::filesystem::path& path,
-				const VertexFormat& layout) {
+				const VertexFormatInfo& layout) {
 			auto buffer = Geometry::Load(path, layout);
 			return Geometry::Unpack<IndexType, Vec2Type, Vec3Type, Vec4Type>(buffer);
 		}

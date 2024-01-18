@@ -1,5 +1,7 @@
 #include <okami/ogl/staticmesh.hpp>
 
+#include <plog/Log.h>
+
 using namespace okami;
 
 Expected<GLWorldUniformBlock> GLWorldUniformBlock::Create(GLProgram const& program) {
@@ -57,24 +59,25 @@ Error GLStaticMeshRenderer::Draw(RenderView const& camera, std::span<GLStaticMes
     _cameraUniforms.Set(camera.GetViewMatrix(), camera.GetProjMatrix());
     
     for (auto mesh : meshes) {
-        // Set the world transform
-        _worldUniforms.Set(mesh.transform.ToMatrix4x4());
+        if (mesh.geometry.desc.layout.formatTag == VertexFormat::PositionUV) {
+            // Set the world transform
+            _worldUniforms.Set(mesh.transform.ToMatrix4x4());
 
-        // Render the mesh
-        OKAMI_ERR_GL(glBindVertexArray(*mesh.geometry.vertexArray));
+            // Render the mesh
+            OKAMI_ERR_GL(glBindVertexArray(*mesh.geometry.vertexArray));
 
-        GLenum topology = ToGL(mesh.geometry.desc.layout.topology);
-        if (!mesh.geometry.desc.isIndexed) {
-            OKAMI_ERR_GL(glDrawArrays(topology, 0, mesh.geometry.desc.attribs.numVertices));
+            GLenum topology = ToGL(mesh.geometry.desc.topology);
+
+            if (!mesh.geometry.desc.isIndexed) {
+                OKAMI_ERR_GL(glDrawArrays(topology, 0, mesh.geometry.desc.attribs.numVertices));
+            } else {
+                OKAMI_ERR_GL(glDrawElements(topology, mesh.geometry.desc.indexedAttribs.numIndices,
+                    ToGL(mesh.geometry.desc.indexedAttribs.indexType), nullptr));
+            }
         } else {
-            OKAMI_ERR_GL(glDrawElements(topology, mesh.geometry.desc.indexedAttribs.numIndices,
-                ToGL(mesh.geometry.desc.indexedAttribs.indexType), nullptr));
+            PLOG_WARNING << "Vertex format is not PositionUV!";
         }
     }
 
     return {};
-}
-
-VertexFormat GLStaticMeshRenderer::GetVertexFormat() {
-    return VertexFormat::PositionColor();
 }

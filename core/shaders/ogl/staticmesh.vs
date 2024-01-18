@@ -9,16 +9,16 @@ uniform mat4 uViewProj;
 uniform mat4 uWorld;
 uniform mat4 uWorldInvTrans;
 
-out vec4 vsColor;
+out vec2 vsUV;
 out vec4 vsWorld;
 
 layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec4 aColor;
+layout (location = 1) in vec2 aUV;
 
 void main()
 {   
     vsWorld = uWorld * vec4(aPos, 1.0);
     gl_Position = uViewProj * vsWorld;
     
-    vsColor = aColor;
+    vsUV = aUV;
 }

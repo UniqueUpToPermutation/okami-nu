@@ -21,6 +21,10 @@ void okami::DestroyGLVertexArray(GLuint id) {
     glDeleteVertexArrays(1, &id);
 }
 
+void okami::DestroyGLSampler(GLuint id) {
+    glDeleteSamplers(1, &id);
+}
+
 Expected<GLBuffer> okami::GLBuffer::Create(BufferData const& buffer) {
     GLBuffer result;
     OKAMI_EXP_GL(glGenBuffers(1, &*result));

@@ -17,18 +17,14 @@ glm::mat4x4 okami::OrthoProjection(
 }
 glm::mat4x4 okami::PerspectiveProjection(
     float fieldOfView, glm::vec2 viewport, float near, float far) {
-    return glm::perspectiveFov(fieldOfView, viewport.x, viewport.y, near, far);
+    return glm::perspectiveFovLH_NO(fieldOfView, viewport.x, viewport.y, near, far);
 }
 
 glm::mat4x4 okami::Projection(
     CameraVariant const& props, glm::vec2 viewport, float near, float far) {
     return MatchReturn(props,
         [&](CameraVariantOrtho const& props) {
-            if (props.extents) {
-                return OrthoProjection(*props.extents, near, far);
-            } else {
-                return OrthoProjection(viewport, near, far);
-            }
+            return OrthoProjection(viewport, near, far);
         },
         [&](CameraVariantPerspective const& props) {
             return PerspectiveProjection(props.fieldOfView, viewport, near, far);
@@ -36,7 +32,11 @@ glm::mat4x4 okami::Projection(
 }
 
 glm::mat4x4 okami::Camera::GetProjMatrix(glm::vec2 viewport) const {
-    return Projection(variant, viewport, near, far);
+    if (extents) {
+        return Projection(variant, *extents, near, far);
+    } else {
+        return Projection(variant, viewport, near, far);
+    }
 }
 
 glm::mat4x4 okami::RenderView::GetProjMatrix() const {

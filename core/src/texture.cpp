@@ -7,9 +7,23 @@
 
 #include <cmath>
 #include <cstring>
+#include <span>
 
 using namespace okami;
 using namespace okami::texture;
+
+glm::uvec1 okami::ColorToBytes(glm::vec1 x) {
+    return glm::clamp(x, glm::vec1(0.0f), glm::vec1(1.0f)) * 255.0f;
+}
+glm::uvec2 okami::ColorToBytes(glm::vec2 x) {
+    return glm::clamp(x, glm::vec2(0.0f, 0.0f), glm::vec2(1.0f, 1.0f)) * 255.0f;
+}
+glm::uvec3 okami::ColorToBytes(glm::vec3 x) {
+    return glm::clamp(x, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f)) * 255.0f;
+}
+glm::uvec4 okami::ColorToBytes(glm::vec4 x) {
+    return glm::clamp(x, glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)) * 255.0f;
+}
 
 Format Format::UNKNOWN() {
     return Format{
@@ -223,13 +237,13 @@ Format Format::RGBA16_UNORM() {
     };
 }
 
-uint MipCount(
+uint texture::MipCount(
     const uint width, 
     const uint height) {
     return (uint)(1 + std::floor(std::log2(std::max(width, height))));
 }
 
-uint MipCount(
+uint texture::MipCount(
     const uint width, 
     const uint height, 
     const uint depth) {
@@ -420,7 +434,7 @@ Buffer LoadFromBytes_RGBA8_UNORM(
     return result;
 }
 
-Buffer LoadPNG(
+Expected<Buffer> LoadPNG(
     const std::filesystem::path& path,
     const TextureLoadParams& params) {
 
@@ -430,32 +444,31 @@ Buffer LoadPNG(
     uint32_t error = lodepng::decode(image, width, height, path.string());
 
     //if there's an error, display it
-    if (error)
-        throw std::runtime_error(lodepng_error_text(error));
+    if (error) {
+        OKAMI_EXP_RETURN_IF(!std::filesystem::exists(path), InvalidPathError{path});
+        return MakeUnexpected(OKAMI_ERR_MAKE(RuntimeError{lodepng_error_text(error)}));
+    }
 
     //the pixels are now in the vector "image", 4 bytes per pixel, ordered RGBARGBA..., use it as texture, draw it, ...
     //State state contains extra information about the PNG such as text chunks, ...
-    else 
-        return LoadFromBytes_RGBA8_UNORM(params, image, width, height);
+    return LoadFromBytes_RGBA8_UNORM(params, image, width, height);
 }
 
-Buffer Buffer::Load(
+Expected<Buffer> Buffer::Load(
     const std::filesystem::path& path,
     const TextureLoadParams& params) {
     
     auto ext = path.extension();
 
-    if (ext == ".png") {
-        return LoadPNG(path, params);
-    } else {
-        throw std::runtime_error("Unsupported file type!");
-    }
+    OKAMI_EXP_RETURN_IF(ext != ".png", RuntimeError{"Unsupported file type!"});
+
+    return LoadPNG(path, params);
 }
 
 Buffer prefabs::SolidColor(
     uint width,
     uint height,
-    std::array<float, 4> color) {
+    glm::vec4 color) {
 
     Desc desc;
     desc.type = Dimension::Texture2D;
@@ -464,20 +477,58 @@ Buffer prefabs::SolidColor(
     desc.format = Format::SRGBA8_UNORM();
 
     auto data = Buffer::Alloc(desc);
+    auto ucolor = ColorToBytes(color);
+    auto src = SpanOf(ucolor);
 
     for (uint y = 0; y < height; ++y) {
         for (uint x = 0; x < width; ++x) {
-            auto ptr = &data.data[(x + y * width) * 4];
-            ptr[0] = static_cast<uint8_t>(
-                std::min<float>(1.0f, std::max<float>(0.0f, color[0])) * 255.0f);
-            ptr[1] = static_cast<uint8_t>(
-                std::min<float>(1.0f, std::max<float>(0.0f, color[1])) * 255.0f);
-            ptr[2] = static_cast<uint8_t>(
-                std::min<float>(1.0f, std::max<float>(0.0f, color[2])) * 255.0f);
-            ptr[3] = static_cast<uint8_t>(
-                std::min<float>(1.0f, std::max<float>(0.0f, color[3])) * 255.0f);
+            auto dest = std::span{&data.data[(x + y * width) * 4], 4};
+            std::copy(src.begin(), src.end(), dest.begin());
         }
     }
 
     return Buffer(std::move(data));
+}
+
+Buffer prefabs::CheckerBoard(
+        uint32_t width,
+        uint32_t height,
+        uint32_t widthSubdivisions,
+        uint32_t heightSubdivisions,
+        glm::vec4 color1,
+        glm::vec4 color2
+    ) {
+    Desc desc;
+    desc.type = Dimension::Texture2D;
+    desc.width = width;
+    desc.height = height;
+    desc.format = Format::SRGBA8_UNORM();
+
+    auto data = Buffer::Alloc(desc);
+
+    auto ucolor1 = ColorToBytes(color1);
+    auto ucolor2 = ColorToBytes(color2);
+
+    auto src1 = SpanOf(ucolor1);
+    auto src2 = SpanOf(ucolor2);
+
+    uint32_t xSubdivSize = width / widthSubdivisions;
+    uint32_t ySubdivSize = height / heightSubdivisions;
+
+    for (uint y = 0; y < height; ++y) {
+        for (uint x = 0; x < width; ++x) {
+            auto dest = std::span{&data.data[(x + y * width) * 4], 4};
+            
+            auto tileX = x / xSubdivSize;
+            auto tileY = y / ySubdivSize;
+
+            if ((tileX + tileY) % 2 == 0) {
+                std::copy(src1.begin(), src1.end(), dest.begin());
+            } else {
+                std::copy(src2.begin(), src2.end(), dest.begin());
+            }
+        }
+    }
+
+    return data;
 }

@@ -6,6 +6,7 @@
 #include <plog/Log.h>
 
 #include <sstream>
+#include <filesystem>
 
 using namespace okami;
 using namespace okami::log;
@@ -50,7 +51,7 @@ std::ostream& okami::operator<<(std::ostream& os, const MultipleErrors& errs) {
 }
 
 std::ostream& okami::operator<<(std::ostream& os, const InvalidPathError& err) {
-    os << "Invalid Path: " << err.path;
+    os << "Invalid Path: " << std::filesystem::absolute(err.path);
     return os;
 }
 

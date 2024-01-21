@@ -1,8 +1,9 @@
 #include <okami/ogl/texture.hpp>
 
 using namespace okami;
+using namespace okami::texture;
 
-void DestroyGLTexture(GLuint id) {
+void okami::DestroyGLTexture(GLuint id) {
     glDeleteTextures(1, &id);
 }
 
@@ -170,7 +171,7 @@ GLenum okami::ToGL(texture::Format format) {
     return GL_INVALID_ENUM;
 }
 
-GLenum ToBaseFormatGL(texture::Format format) {
+GLenum okami::ToBaseFormatGL(texture::Format format) {
     switch (format.channels) {
         case 1:
             return GL_RED;
@@ -190,6 +191,9 @@ GLenum ToBaseFormatGL(texture::Format format) {
 Expected<GLTexture> GLTexture::Create(texture::Buffer const& buffer) {
     GLTexture tex;
     tex.desc = buffer.GetDesc();
+
+    OKAMI_EXP_RETURN_IF(buffer.desc.type != Dimension::Texture2D, 
+        RuntimeError{"Only 2D textures are currently supported!"});
     
     OKAMI_EXP_GL(glGenTextures(1, &*tex));
     OKAMI_EXP_GL(glBindTexture(GL_TEXTURE_2D, *tex));
@@ -208,4 +212,8 @@ Expected<GLTexture> GLTexture::Create(texture::Buffer const& buffer) {
     }
 
     return tex;
+}
+
+Expected<GLTexture> GLTexture::Create(texture::Buffer&& buffer) {
+    return Create(buffer);
 }

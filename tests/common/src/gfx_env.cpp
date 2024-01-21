@@ -18,7 +18,10 @@ void GfxEnvironment::ErrorHandler(int error, const char* desc) {
     OKAMI_ERR_SET(_gSingleton->_error, (GlfwError{error, desc}));
 }
 
-GfxEnvironment::GfxEnvironment() : _window(nullptr, &glfwDestroyWindow) {
+GfxEnvironment::GfxEnvironment(GfxEnvironmentParams params) : 
+    _params(params),
+    _window(nullptr, &glfwDestroyWindow) {
+    glfwSetTime(0);
 }
 
 GfxEnvironment::GfxEnvironment(GfxEnvironment&& other) : GfxEnvironment() {
@@ -31,6 +34,7 @@ GfxEnvironment& GfxEnvironment::operator=(GfxEnvironment&& other) {
     }
     _window = std::move(other._window);
     _error = std::move(other._error);
+    _params = std::move(other._params);
 
     return *this;
 }
@@ -42,11 +46,11 @@ GfxEnvironment::~GfxEnvironment() {
     }
 }
 
-Expected<GfxEnvironment> GfxEnvironment::Create() {
+Expected<GfxEnvironment> GfxEnvironment::Create(GfxEnvironmentParams params) {
     static plog::ConsoleAppender<plog::TxtFormatter> consoleAppender;
     plog::init(plog::debug, &consoleAppender);
 
-    GfxEnvironment result;
+    GfxEnvironment result(params);
     result._gSingleton = &result;
 
     PLOG_INFO << "Initializing GLFW...";
@@ -59,7 +63,7 @@ Expected<GfxEnvironment> GfxEnvironment::Create() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    auto window = glfwCreateWindow(1920, 1080, "Test", nullptr, nullptr);      
+    auto window = glfwCreateWindow(1920, 1080, result._params.windowTitle.c_str(), nullptr, nullptr);      
     OKAMI_EXP_RETURN(result._error);
 
     glfwMakeContextCurrent(window);
@@ -96,6 +100,17 @@ bool GfxEnvironment::ShouldClose() const {
 }
 
 Error GfxEnvironment::MessagePump() {
+    // Update timer
+    if (!_isTimerInitialized) {
+        glfwSetTime(0);
+    }
+    _isTimerInitialized = true;
+
+    auto newTime = glfwGetTime();
+    _deltaTime = newTime - _lastTime;
+    _lastTime = newTime;
+
+    // Update glfw
     _error = {};
     glfwPollEvents();
     OKAMI_ERR_RETURN(_error);
@@ -107,4 +122,11 @@ Error GfxEnvironment::SwapBuffers() {
     glfwSwapBuffers(_window.get());
     OKAMI_ERR_RETURN(_error);
     return {};
+}
+
+double GfxEnvironment::GetTime() const {
+    return _lastTime;
+}
+double GfxEnvironment::GetDeltaTime() const {
+    return _deltaTime;
 }

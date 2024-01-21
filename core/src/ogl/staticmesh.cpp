@@ -32,26 +32,49 @@ void GLCameraUniformBlock::Set(glm::mat4 const& view, glm::mat4 const& proj) con
     glUniformMatrix4fv(uViewProj, 1, false, &viewProj[0][0]);
 }
 
+Expected<GLTexturedUniformBlock> GLTexturedUniformBlock::Create(GLProgram const& program) {
+    GLTexturedUniformBlock result;
+    result.uTextureSampler = UnwrapAndWarn(program.GetUniformLocation("uTextureSampler"), -1);
+    result.uColor = UnwrapAndWarn(program.GetUniformLocation("uColor"), -1);
+    return result;
+}
+
+void GLTexturedUniformBlock::Set(
+    GLTexturedMaterial const& mat, 
+    GLTexture const& defaultTex,
+    GLDefaultSamplers const& samplers) const {
+    glActiveTexture(GL_TEXTURE0);
+    if (mat.texture) {
+        glBindTexture(GL_TEXTURE_2D, **mat.texture);
+        glBindSampler(0, *samplers.Select(mat.textureSampler));
+    } else {
+        glBindTexture(GL_TEXTURE_2D, *defaultTex);
+        glBindSampler(0, *samplers.Select(SamplerType::POINT_WRAP));
+    }
+    glUniform1i(uTextureSampler, 0);
+    glUniform4fv(uColor, 1, &mat.color[0]);
+}
+
 Expected<GLStaticMeshRenderer> GLStaticMeshRenderer::Create() {
     Error err;
     GLStaticMeshRenderer result;
 
+    auto texture = texture::prefabs::CheckerBoard(16, 16, 8, 8);
+    result._defaultTexture = OKAMI_EXP_UNWRAP(GLTexture::Create(std::move(texture)), err);
+
     auto vs = OKAMI_EXP_UNWRAP(LoadEmbeddedGLShader("staticmesh.vs", GL_VERTEX_SHADER, {}), err);
-    auto fs = OKAMI_EXP_UNWRAP(LoadEmbeddedGLShader("flatcolor.fs", GL_FRAGMENT_SHADER, {}), err);
+    auto fs = OKAMI_EXP_UNWRAP(LoadEmbeddedGLShader("textured.fs", GL_FRAGMENT_SHADER, {}), err);
 
     result._renderProgram = OKAMI_EXP_UNWRAP(CreateProgram(std::array{*vs, *fs}), err);
     result._cameraUniforms = OKAMI_EXP_UNWRAP(GLCameraUniformBlock::Create(result._renderProgram), err);
     result._worldUniforms = OKAMI_EXP_UNWRAP(GLWorldUniformBlock::Create(result._renderProgram), err);
+    result._samplers = OKAMI_EXP_UNWRAP(GLDefaultSamplers::Create(), err);
+    result._texturedUniforms = OKAMI_EXP_UNWRAP(GLTexturedUniformBlock::Create(result._renderProgram), err);
 
     return result;
 }
 
 Error GLStaticMeshRenderer::Draw(RenderView const& camera, std::span<GLStaticMeshRenderCall const> meshes) const {
-    OKAMI_ERR_GL(glDisable(GL_DEPTH_TEST));
-    OKAMI_ERR_GL(glDisable(GL_CULL_FACE));
-    OKAMI_ERR_GL(glDisable(GL_SCISSOR_TEST));
-    OKAMI_ERR_GL(glDisable(GL_STENCIL_TEST));
-
     OKAMI_ERR_GL(glUseProgram(*_renderProgram));
     OKAMI_ERR_GL(glViewport(0, 0, camera.viewport.x, camera.viewport.y));
 
@@ -63,7 +86,11 @@ Error GLStaticMeshRenderer::Draw(RenderView const& camera, std::span<GLStaticMes
             // Set the world transform
             _worldUniforms.Set(mesh.transform.ToMatrix4x4());
 
-            // Render the mesh
+            // Bind the material
+            auto material = mesh.material.value_or(GLTexturedMaterial{});
+            _texturedUniforms.Set(material, _defaultTexture, _samplers);
+
+            // Bind the mesh
             OKAMI_ERR_GL(glBindVertexArray(*mesh.geometry.vertexArray));
 
             GLenum topology = ToGL(mesh.geometry.desc.topology);

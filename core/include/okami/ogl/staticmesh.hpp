@@ -2,6 +2,8 @@
 
 #include <okami/ogl/utils.hpp>
 #include <okami/ogl/geometry.hpp>
+#include <okami/ogl/samplers.hpp>
+#include <okami/ogl/material.hpp>
 #include <okami/transform.hpp>
 #include <okami/camera.hpp>
 
@@ -27,12 +29,20 @@ namespace okami {
         void Set(glm::mat4 const& world) const;
     };
 
-    struct GLStaticMeshMaterial {
+    struct GLTexturedUniformBlock {
+        GLint uTextureSampler;
+        GLint uColor;
+
+        static Expected<GLTexturedUniformBlock> Create(GLProgram const& program);
+
+        void Set(GLTexturedMaterial const& mat, 
+            GLTexture const& defaultTex,
+            GLDefaultSamplers const& samplers) const;
     };
 
     struct GLStaticMeshRenderCall {
         GLGeometry const& geometry;
-        GLStaticMeshMaterial const& material;
+        std::optional<GLTexturedMaterial> material;
         Transform transform;
     };
 
@@ -41,6 +51,9 @@ namespace okami {
         GLProgram _renderProgram;
         GLCameraUniformBlock _cameraUniforms;
         GLWorldUniformBlock _worldUniforms;
+        GLTexturedUniformBlock _texturedUniforms;
+        GLDefaultSamplers _samplers;
+        GLTexture _defaultTexture;
 
     public:
         static Expected<GLStaticMeshRenderer> Create();

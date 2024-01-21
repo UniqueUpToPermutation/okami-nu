@@ -15,56 +15,30 @@ using namespace okami::test;
 Error TestMain() {
     Error err;
     GfxEnvironment env = OKAMI_ERR_UNWRAP(GfxEnvironment::Create(GfxEnvironmentParams{
-        .windowTitle = "Static Mesh Test"
+        .windowTitle = "Texture Test"
     }), err);
 
     {
         GLStaticMeshRenderer meshRenderer = OKAMI_ERR_UNWRAP(GLStaticMeshRenderer::Create(), err);
 
         auto layout = meshRenderer.GetVertexFormat();
-        geometry::Data<> data {
-            .positions = {
-                glm::vec3(0.0f, 0.5f, 0.0f),
-                glm::vec3(0.5f, -0.5f, 0.0f),
-                glm::vec3(-0.5f, -0.5f, 0.0f)
-            },
-            .uvs = {
-                {
-                    glm::vec2(0.5f, 0.0f),
-                    glm::vec2(1.0f, 1.0f),
-                    glm::vec2(0.0f, 1.0f)
-                }
-            },
-        };
-
-        Geometry geometry = Geometry::Pack(layout, data);
+        Geometry geometry = geometry::prefabs::MaterialBall(layout);
         GLGeometry gpuGeometry = OKAMI_ERR_UNWRAP(GLGeometry::Create(geometry), err);
 
-        GLTexturedMaterial material;
+        auto cpuTexture = OKAMI_ERR_UNWRAP(
+            texture::Load("tests/common/assets/texture.png", TextureLoadParams{
+                .isSRGB = true,
+                .generateMips = true
+        }), err);
+        auto gpuTexture = OKAMI_ERR_UNWRAP(GLTexture::Create(std::move(cpuTexture)), err);
+
+        GLTexturedMaterial material{
+            .texture = &gpuTexture,
+        };
         auto calls = std::array{
             GLStaticMeshRenderCall{
                 .geometry = gpuGeometry,
                 .material = material,
-                .transform = Transform::Translate(0.5f, 0.5f)
-            },
-            GLStaticMeshRenderCall{
-                .geometry = gpuGeometry,
-                .material = material,
-                .transform = Transform::Translate(-0.5f, 0.5f) * 
-                    Transform::Rotate2D(glm::pi<float>())
-            },
-            GLStaticMeshRenderCall{
-                .geometry = gpuGeometry,
-                .material = material,
-                .transform = Transform::Translate(-0.5f, -0.5f) * 
-                    Transform::Scale(0.5f)
-            },
-            GLStaticMeshRenderCall{
-                .geometry = gpuGeometry,
-                .material = material,
-                .transform = Transform::Translate(0.5f, -0.5f) * 
-                    Transform::Rotate2D(glm::pi<float>() / 2.f) * 
-                    Transform::Scale(0.5f)
             },
         };
 
@@ -72,13 +46,29 @@ Error TestMain() {
             err += env.MessagePump();
             OKAMI_ERR_RETURN(err);
 
+            glEnable(GL_DEPTH_TEST);
+
             glClearColor(0.4f, 0.4f, 0.4f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+            glm::vec3 cameraEye{1.0f, 1.0f, 1.0f};
+            glm::vec3 cameraTarget{0.0f, 0.0f, 0.0f};
+            glm::vec3 cameraUp{0.0f, 1.0f, 0.0f};
+
+            Camera camera;
+            camera.near = 1.0f;
+            camera.far = 10.0f;
+            camera.variant = CameraVariantPerspective{.fieldOfView = glm::pi<float>() / 4.0f};
+
+            glm::quat cameraRotate = glm::angleAxis<float>(env.GetTime(), cameraUp);
+            cameraEye = glm::rotate(cameraRotate, cameraEye);
+            cameraEye *= 5.0f;
+
             RenderView renderView {
-                .camera = {},
+                .camera = camera,
                 .viewport = env.GetViewport(),
-                .viewTransform = {}
+                .viewTransform = (Transform::Translate(0.0f, 1.0f, 0.0f) *
+                    Transform::LookAt(cameraEye, cameraTarget, cameraUp)).Inverse()
             };
 
             err += meshRenderer.Draw(renderView, calls);

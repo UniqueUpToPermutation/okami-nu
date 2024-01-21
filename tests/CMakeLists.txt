@@ -1,3 +1,4 @@
 add_subdirectory(common)
 add_subdirectory(hello_world)
 add_subdirectory(ogl_static_mesh)
+add_subdirectory(ogl_texture)

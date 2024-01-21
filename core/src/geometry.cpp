@@ -55,7 +55,7 @@ Geometry okami::geometry::prefabs::MaterialBall(const VertexFormatInfo& layout) 
             matball::bitangents));
 }
 
-Geometry okami::geometry::prefabs::Box(const VertexFormatInfo& layout) {
+Geometry okami::geometry::prefabs::UnitBox(const VertexFormatInfo& layout) {
     return Geometry(layout, 
         DataView
             <uint32_t, float, float, float>(
@@ -69,7 +69,7 @@ Geometry okami::geometry::prefabs::Box(const VertexFormatInfo& layout) {
             box::bitangents));
 }
 
-Geometry okami::geometry::prefabs::Sphere(const VertexFormatInfo& layout) {
+Geometry okami::geometry::prefabs::UnitSphere(const VertexFormatInfo& layout) {
     return Geometry(layout, 
         DataView
             <uint32_t, float, float, float>(

@@ -36,6 +36,12 @@ Expected<GLGeometry> GLGeometry::Create(Geometry const& geometry) {
             (GLvoid*)layoutElement.relativeOffset));
     }
 
+    if (geo.desc.isIndexed) {
+        OKAMI_EXP_GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *geo.indexBuffer));
+    }
+
+    OKAMI_EXP_GL(glBindVertexArray(0));
+
     return geo;
 }
 

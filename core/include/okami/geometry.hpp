@@ -56,6 +56,7 @@ namespace okami {
 			std::vector<Vec3Type> bitangents;
 			std::vector<std::vector<Vec4Type>> colors;
 			std::vector<std::vector<Vec3Type>> uvws;
+			Topology topology = Topology::TRIANGLE_LIST;
 
 			template <typename Archive>
 			void serialize(Archive& arr) {
@@ -94,6 +95,7 @@ namespace okami {
 			Vec3Type const* bitangents;
 			std::vector<Vec4Type const*> colors;
 			std::vector<Vec3Type const*> uvws;
+			Topology topology = Topology::TRIANGLE_LIST;
 
 			inline DataView(
 				const Data<IndexType, Vec2Type, Vec3Type, Vec4Type>& data) :
@@ -103,7 +105,8 @@ namespace okami {
 				positions(data.positions.size() > 0 ? &data.positions[0] : nullptr),
 				normals(data.normals.size() > 0 ? &data.normals[0] : nullptr),
 				tangents(data.tangents.size() > 0 ? &data.tangents[0] : nullptr),
-				bitangents(data.bitangents.size() > 0 ? &data.bitangents[0] : nullptr) {
+				bitangents(data.bitangents.size() > 0 ? &data.bitangents[0] : nullptr),
+				topology(data.topology) {
 
 				for (auto& uv : data.uvs) {
 					uvs.emplace_back(&uv[0]);
@@ -307,8 +310,8 @@ namespace okami {
 
 		namespace prefabs {
 			Geometry MaterialBall(const VertexFormatInfo& layout);
-			Geometry Box(const VertexFormatInfo& layout);
-			Geometry Sphere(const VertexFormatInfo& layout);
+			Geometry UnitBox(const VertexFormatInfo& layout);
+			Geometry UnitSphere(const VertexFormatInfo& layout);
 			Geometry BlenderMonkey(const VertexFormatInfo& layout);
 			Geometry Torus(const VertexFormatInfo& layout);
 			Geometry Plane(const VertexFormatInfo& layout);
@@ -764,6 +767,7 @@ namespace okami {
 			result.desc.attribs = attribs;
 			result.desc.indexedAttribs = indexedAttribs;
 			result.desc.layout = layout;
+			result.desc.topology = data.topology;
 
 			result.vertexBuffers.clear();
 

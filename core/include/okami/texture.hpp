@@ -2,9 +2,22 @@
 
 #include <okami/vertex_format.hpp>
 
+#include <glm/glm.hpp>
+
 #include <filesystem>
+#include <span>
 
 namespace okami {
+    glm::uvec1 ColorToBytes(glm::vec1 x);
+    glm::uvec2 ColorToBytes(glm::vec2 x);
+    glm::uvec3 ColorToBytes(glm::vec3 x);
+    glm::uvec4 ColorToBytes(glm::vec4 x);
+
+    template <typename T>
+    auto SpanOf(T& obj) {
+        return std::span{&obj[0], static_cast<size_t>(obj.length())};
+    }
+
     namespace texture {
         enum class Dimension {
             Buffer,
@@ -84,16 +97,6 @@ namespace okami {
         struct LoadParams {
             bool isSRGB = false;
             bool generateMips = true;
-            
-            inline LoadParams() {
-            }
-
-            inline LoadParams(
-                bool isSRGB, 
-                bool generateMips) :
-                isSRGB(isSRGB),
-                generateMips(generateMips) {
-            }
 
             template <class Archive>
             void save(Archive& archive) const {
@@ -172,7 +175,7 @@ namespace okami {
 
             void GenerateMips();
             static Buffer Alloc(const Desc& desc);
-            static Buffer Load(
+            static Expected<Buffer> Load(
                 const std::filesystem::path& path,
                 const LoadParams& params);
 
@@ -181,17 +184,25 @@ namespace okami {
             }
         };
 
-        inline Buffer Load(
+        inline Expected<Buffer> Load(
             const std::filesystem::path& path,
             const LoadParams& params) {
             return Buffer::Load(path, params);
         }
 
         namespace prefabs {
-            static Buffer SolidColor(
+            Buffer SolidColor(
                 uint32_t width,
                 uint32_t height,
-                std::array<float, 4> color);
+                glm::vec4 color);
+            Buffer CheckerBoard(
+                uint32_t width,
+                uint32_t height,
+                uint32_t widthSubdivisions,
+                uint32_t heightSubdivisions,
+                glm::vec4 color1 = glm::vec4(0.8f, 0.8f, 0.8f, 1.0f),
+                glm::vec4 color2 = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f)
+            );
         };
     }
 

@@ -1,6 +1,7 @@
 #include <okami/transform.hpp>
 
-#include <glm/gtx/quaternion.hpp>
+#include <array>
+#include <algorithm>
 
 using namespace okami;
 
@@ -39,14 +40,19 @@ Transform okami::operator*(Transform const& a, Transform const& b) {
     return result;
 }
 
+glm::vec3 okami::operator*(Transform const& a, glm::vec3 const& b) {
+    return a.TransformPoint(b);
+}
+
 glm::vec4 okami::operator*(Transform const& a, glm::vec4 const& b) {
     return a.TransformHomogenous(b);
 }
 
 Transform okami::Inverse(Transform const& transform) {
+    auto conj = glm::conjugate(transform.rotation);
     return Transform(
-        -transform.translation,
-        glm::conjugate(transform.rotation),
+        glm::rotate(conj, -transform.translation),
+        conj,
         1.0f / transform.scale
     );
 }
@@ -77,4 +83,48 @@ Transform Transform::Rotate2D(float radians) {
 }
 Transform Transform::Scale(float scale) {
     return Transform(glm::zero<glm::vec3>(), glm::identity<glm::quat>(), scale);
+}
+
+glm::vec3 MaxNormColumn(glm::mat3 const& mat) {
+    auto magnitudes = std::array{
+        glm::length2(mat[0]), glm::length2(mat[1]), glm::length2(mat[2])};
+    auto best = std::max_element(magnitudes.begin(), magnitudes.end());
+    return mat[best - magnitudes.begin()];
+}
+
+glm::quat ToQuaternion(glm::mat3 rotation) {
+    auto data = rotation;
+
+    data[0][0] -= 1.0f;
+    data[1][1] -= 1.0f;
+    data[2][2] -= 1.0f;
+
+    // Gramm-Schmidt
+    auto vec1 = MaxNormColumn(data);
+    if (glm::l2Norm(vec1) <= std::numeric_limits<float>::epsilon()) {
+        return glm::identity<glm::quat>();
+    }
+    vec1 = glm::normalize(vec1);
+
+    data = data - glm::outerProduct(vec1, vec1) * data;
+    auto vec2 = glm::normalize(MaxNormColumn(data));
+
+    auto axis = glm::cross(vec1, vec2);
+
+    float cosTheta = (glm::dot(vec1, rotation * vec1) + glm::dot(vec2, rotation * vec2)) / 2.0f;
+    float sinTheta = (glm::dot(vec2, rotation * vec1) - glm::dot(vec1, rotation * vec2)) / 2.0f;
+
+    float theta = glm::atan(sinTheta, cosTheta);
+
+    return glm::angleAxis(theta, axis);
+}
+
+Transform Transform::LookAt(glm::vec3 eye, glm::vec3 target, glm::vec3 up) {
+    auto forward = glm::normalize(target - eye);
+    up = glm::normalize(up);
+    auto side = glm::normalize(-glm::cross(forward, up));
+    up = -glm::cross(side, forward);
+    
+    auto rotation = ToQuaternion(glm::mat3{side, up, forward});
+    return Transform(eye, rotation);
 }

@@ -21,12 +21,10 @@ namespace okami {
     };
 
     struct CameraVariantOrtho {
-        // Overrides viewport if set
-        std::optional<glm::vec2> extents;
     };
 
     struct CameraVariantPerspective {
-        float fieldOfView = glm::pi<float>();
+        float fieldOfView = glm::pi<float>() / 2.0f;
     };
 
     using CameraVariant = std::variant<CameraVariantOrtho, CameraVariantPerspective>;
@@ -36,9 +34,9 @@ namespace okami {
     glm::mat4x4 Projection(CameraVariant const& props, glm::vec2 viewport, float near, float far);
 
     struct Camera {
-        CameraVariant variant = CameraVariantOrtho{
-            .extents = glm::vec2(2.0f, 2.0f)
-        };
+        CameraVariant variant = CameraVariantOrtho{};
+        // Overrides viewport if set
+        std::optional<glm::vec2> extents;
         float near = -1.0f;
         float far = 1.0f;
 

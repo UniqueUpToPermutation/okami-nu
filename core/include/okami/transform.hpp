@@ -2,6 +2,7 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 namespace okami {
     struct Transform {
@@ -9,12 +10,13 @@ namespace okami {
         float scale;
         glm::quat rotation;
 
-        inline Transform(glm::vec3 translation = glm::zero<glm::vec3>(),
+        explicit inline Transform(glm::vec3 translation,
             glm::quat rotation = glm::identity<glm::quat>(),
             float scale = 1.0f) : 
             translation(translation), 
             rotation(rotation), 
             scale(scale) {}
+        inline Transform() : Transform(glm::zero<glm::vec3>()) {}
 
         Transform& operator*=(Transform const& other);
     
@@ -31,12 +33,14 @@ namespace okami {
         static Transform Rotate(glm::quat q);
         static Transform Rotate2D(float radians);
         static Transform Scale(float scale);
+        static Transform LookAt(glm::vec3 eye, glm::vec3 target, glm::vec3 up);
 
         glm::mat4x4 ToMatrix4x4() const;
     };
 
     Transform operator*(Transform const& a, Transform const& b);
     glm::vec4 operator*(Transform const& a, glm::vec4 const& b);
+    glm::vec3 operator*(Transform const& a, glm::vec3 const& b);
 
     Transform Inverse(Transform const& transform);
 }

@@ -3,6 +3,7 @@
 #include <entt/entt.hpp>
 
 #include <vector>
+#include <span>
 #include <unordered_map>
 
 #include <okami/error.hpp>

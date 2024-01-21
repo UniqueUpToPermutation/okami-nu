@@ -12,5 +12,6 @@ namespace okami {
         texture::Desc desc;
 
         static Expected<GLTexture> Create(texture::Buffer const& buffer);
+        static Expected<GLTexture> Create(texture::Buffer&& buffer);
     };
 }

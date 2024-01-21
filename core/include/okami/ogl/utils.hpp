@@ -64,9 +64,12 @@ namespace okami {
     struct GLVertexArray final : public GLuintObject<DestroyGLVertexArray> {
         using GLuintObject::GLuintObject;
 
-        static Expected<GLVertexArray> Create(
-            
-            VertexFormatInfo const& format);
+        static Expected<GLVertexArray> Create(VertexFormatInfo const& format);
+    };
+
+    void DestroyGLSampler(GLuint id);
+    struct GLSampler final : public GLuintObject<DestroyGLSampler> {
+        using GLuintObject::GLuintObject;
     };
 
     Expected<GLShader> LoadEmbeddedGLShader(

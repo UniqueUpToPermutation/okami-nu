@@ -100,9 +100,9 @@ Expected<GLIm3dRenderer> okami::GLIm3dRenderer::Create() {
 	return result;
 }
 
-Error okami::GLIm3dRenderer::Draw(
-	Im3d::Context& context,
-	int viewportWidth, int viewportHeight) const {
+Error GLIm3dRenderer::Draw(
+	RenderView const& camera, 
+	Im3d::Context& context) const {
 	
 	// Typical pipeline state: enable alpha blending, disable depth test and backface culling.
 	OKAMI_ERR_GL(glEnable(GL_BLEND));
@@ -111,8 +111,6 @@ Error okami::GLIm3dRenderer::Draw(
 	OKAMI_ERR_GL(glEnable(GL_PROGRAM_POINT_SIZE));
 	OKAMI_ERR_GL(glDisable(GL_DEPTH_TEST));
 	OKAMI_ERR_GL(glDisable(GL_CULL_FACE));
-
-	OKAMI_ERR_GL(glViewport(0, 0, (GLsizei)viewportWidth, (GLsizei)viewportHeight));
 		
 	for (Im3d::U32 i = 0, n = context.getDrawListCount(); i < n; ++i)
 	{
@@ -153,16 +151,57 @@ Error okami::GLIm3dRenderer::Draw(
 		OKAMI_ERR_GL(glUniform2f(sh->uViewport, 
 			ad.m_viewportSize.x, ad.m_viewportSize.y));
 
-		GLfloat tmp[] = {
-			1.0f, 0.0f, 0.0f, 0.0f,
-			0.0f, 1.0f, 0.0f, 0.0f,
-			0.0f, 0.0f, 1.0f, 0.0f,
-			0.0f, 0.0f, 0.0f, 1.0f
-		};
-
-		OKAMI_ERR_GL(glUniformMatrix4fv(sh->uViewProjMatrix, 1, false, tmp));
+		auto viewProj = camera.GetViewProjMatrix();
+		OKAMI_ERR_GL(glUniformMatrix4fv(sh->uViewProjMatrix, 1, false, &viewProj[0][0]));
 		OKAMI_ERR_GL(glDrawArrays(prim, 0, (GLsizei)drawList.m_vertexCount));
 	}
 
 	return {};
+}
+
+Im3d::Vec2 okami::Im3dConv(glm::vec2 a) {
+	return Im3d::Vec2{a.x, a.y};
+}
+Im3d::Vec3 okami::Im3dConv(glm::vec3 a) {
+	return Im3d::Vec3{a.x, a.y, a.z};
+}
+Im3d::Vec4 okami::Im3dConv(glm::vec4 a) {
+	return Im3d::Vec4{a.x, a.y, a.z, a.w};
+}
+
+glm::vec2 okami::Im3dConv(Im3d::Vec2 a) {
+	return glm::vec2{a.x, a.y};
+}
+glm::vec3 okami::Im3dConv(Im3d::Vec3 a) {
+	return glm::vec3{a.x, a.y, a.z};
+}
+glm::vec4 okami::Im3dConv(Im3d::Vec4 a) {
+	return glm::vec4{a.x, a.y, a.z, a.w};
+}
+
+Im3d::AppData okami::Im3dCreateAppData(RenderView const& camera, glm::vec2 viewport, double deltaTime) {
+
+	auto cameraTransform = camera.viewTransform.Inverse();
+
+	auto forward = cameraTransform.TransformTangent(glm::vec3{0.0f, 0.0f, 1.0f});
+	auto origin = cameraTransform.TransformPoint(glm::vec3{0.0f, 0.0f, 0.0f});
+
+	Im3d::AppData appData;
+	appData.m_deltaTime = deltaTime;
+	appData.m_worldUp = Im3d::Vec3{0.0f, 1.0f, 0.0f};
+	appData.m_projOrtho = camera.camera.IsOrtho();
+	appData.m_viewOrigin = Im3dConv(origin);
+	appData.m_viewDirection = Im3dConv(forward);
+	appData.m_viewportSize = Im3dConv(viewport);
+	appData.m_projScaleY = [&]() {
+		if (auto ortho = std::get_if<CameraVariantOrtho>(&camera.camera.variant)) {
+			return camera.viewport.y;
+		} else if (auto perspective = std::get_if<CameraVariantPerspective>(&camera.camera.variant)) {
+			return glm::tan(perspective->fieldOfView);
+		} else {
+			return 1.0f;
+		}
+	}();
+
+	return appData;
 }

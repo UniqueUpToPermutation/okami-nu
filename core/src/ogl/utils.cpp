@@ -113,7 +113,7 @@ Expected<GLShader> okami::LoadEmbeddedGLShader(
 
     // Get shader source from filesystem
     auto shaderSrc = OKAMI_EXP_UNWRAP(
-        ShaderPreprocessor::Load(path, fs, {}, nullptr, true), err);
+        ShaderPreprocessor::Load(path, fs, config, nullptr, true), err);
     const char* pData[] = { shaderSrc.content.data() };
     GLint pLen[] = { static_cast<GLint>(shaderSrc.content.size()) };
     OKAMI_EXP_GL(glShaderSource(*shader, 1, pData, pLen));

@@ -1,3 +1,5 @@
+#version 330 core
+
 #if !defined(POINTS) && !defined(LINES) && !defined(TRIANGLES)
 	#error No primitive type defined
 #endif

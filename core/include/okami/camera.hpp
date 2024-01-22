@@ -40,6 +40,12 @@ namespace okami {
         float near = -1.0f;
         float far = 1.0f;
 
+        inline bool IsOrtho() const {
+            return std::holds_alternative<CameraVariantOrtho>(variant);
+        }
+        inline bool IsPerspective() const {
+            return std::holds_alternative<CameraVariantPerspective>(variant);
+        }
         glm::mat4x4 GetProjMatrix(glm::vec2 viewport) const;
     };
 

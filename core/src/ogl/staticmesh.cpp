@@ -76,7 +76,6 @@ Expected<GLStaticMeshRenderer> GLStaticMeshRenderer::Create() {
 
 Error GLStaticMeshRenderer::Draw(RenderView const& camera, std::span<GLStaticMeshRenderCall const> meshes) const {
     OKAMI_ERR_GL(glUseProgram(*_renderProgram));
-    OKAMI_ERR_GL(glViewport(0, 0, camera.viewport.x, camera.viewport.y));
 
     // Set the camera view and projection transforms
     _cameraUniforms.Set(camera.GetViewMatrix(), camera.GetProjMatrix());

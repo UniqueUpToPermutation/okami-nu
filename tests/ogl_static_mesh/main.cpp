@@ -78,7 +78,7 @@ Error TestMain() {
 
             RenderView renderView {
                 .camera = {},
-                .viewport = env.GetViewport(),
+                .viewport = glm::vec2{2.0f, 2.0f},
                 .viewTransform = {}
             };
 
